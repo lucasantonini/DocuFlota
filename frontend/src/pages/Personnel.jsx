@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   FileText
 } from 'lucide-react'
+import UploadModal from '../components/UploadModal'
 
 const Personnel = () => {
   const [personnel, setPersonnel] = useState([
@@ -55,6 +56,7 @@ const Personnel = () => {
   ])
 
   const [expandedRows, setExpandedRows] = useState(new Set([3])) // Roberto expanded by default
+  const [uploadModal, setUploadModal] = useState({ isOpen: false, personnelId: null, personnelName: '' })
 
   const stats = {
     total: personnel.length,
@@ -70,6 +72,28 @@ const Personnel = () => {
       newExpanded.add(personnelId)
     }
     setExpandedRows(newExpanded)
+  }
+
+  const handleUploadClick = (personnelId, personnelName) => {
+    setUploadModal({
+      isOpen: true,
+      personnelId,
+      personnelName
+    })
+  }
+
+  const handleUploadClose = () => {
+    setUploadModal({
+      isOpen: false,
+      personnelId: null,
+      personnelName: ''
+    })
+  }
+
+  const handleUpload = (files) => {
+    // Here you would implement the actual upload logic
+    console.log('Uploading files for personnel:', uploadModal.personnelId, files)
+    // You can call an API endpoint here to upload the files
   }
 
   const getStatusBadge = (status) => {
@@ -172,12 +196,8 @@ const Personnel = () => {
 
       {/* Personnel List */}
       <div className="card">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6">
           <h2 className="text-lg font-medium text-gray-900">Lista de Personal</h2>
-          <button className="btn-primary flex items-center gap-2">
-            <Plus className="h-5 w-5" />
-            Agregar Personal
-          </button>
         </div>
 
         <div className="space-y-4">
@@ -208,7 +228,10 @@ const Personnel = () => {
                     Próximo vencimiento: {formatDate(person.nextExpiration)}
                   </div>
                   <div className="flex gap-2">
-                    <button className="flex items-center gap-1 text-primary-600 hover:text-primary-900">
+                    <button 
+                      onClick={() => handleUploadClick(person.id, person.name)}
+                      className="flex items-center gap-1 text-primary-600 hover:text-primary-900"
+                    >
                       <Upload className="h-4 w-4" />
                       Cargar
                     </button>
@@ -243,7 +266,10 @@ const Personnel = () => {
                         <div className="flex items-center gap-4">
                           {getDocumentStatus(document)}
                           <div className="flex gap-2">
-                            <button className="flex items-center gap-1 text-primary-600 hover:text-primary-900 text-sm">
+                            <button 
+                              onClick={() => handleUploadClick(person.id, person.name)}
+                              className="flex items-center gap-1 text-primary-600 hover:text-primary-900 text-sm"
+                            >
                               <Upload className="h-4 w-4" />
                               Cargar documento
                             </button>
@@ -262,6 +288,15 @@ const Personnel = () => {
           ))}
         </div>
       </div>
+
+      {/* Upload Modal */}
+      <UploadModal
+        isOpen={uploadModal.isOpen}
+        onClose={handleUploadClose}
+        onUpload={handleUpload}
+        personnelId={uploadModal.personnelId}
+        personnelName={uploadModal.personnelName}
+      />
     </div>
   )
 }
