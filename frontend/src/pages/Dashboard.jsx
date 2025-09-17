@@ -10,6 +10,8 @@ import {
   ArrowUp,
   Share2
 } from 'lucide-react'
+import { useNotifications } from '../contexts/NotificationContext'
+import NotificationPopup from '../components/NotificationPopup'
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -20,6 +22,27 @@ const Dashboard = () => {
     expiringSoon: 8,
     expired: 3
   })
+
+  const { showNotifications, closeNotifications } = useNotifications()
+
+  // Sample notifications for expiring documents
+  const notifications = [
+    {
+      vehicle: 'ABC-123 - Tractor Principal',
+      document: 'SOAT',
+      daysLeft: 15
+    },
+    {
+      vehicle: 'DEF-456 - Semirremolque A',
+      document: 'Revisión Técnica',
+      daysLeft: 8
+    },
+    {
+      vehicle: 'GHI-789 - Tractor Secundario',
+      document: 'Seguro',
+      daysLeft: 12
+    }
+  ]
 
   const StatCard = ({ title, value, description, icon: Icon, color = 'text-gray-900', statusLabel, statusColor }) => (
     <div className="card">
@@ -124,6 +147,13 @@ const Dashboard = () => {
           statusColor="bg-danger-100 text-danger-600"
         />
       </div>
+
+      {/* Notification Popup */}
+      <NotificationPopup
+        isOpen={showNotifications}
+        onClose={closeNotifications}
+        notifications={notifications}
+      />
     </div>
   )
 }

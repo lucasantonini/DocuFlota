@@ -10,10 +10,12 @@ import {
   Menu,
   X
 } from 'lucide-react'
+import { useNotifications } from '../contexts/NotificationContext'
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
+  const { openNotifications } = useNotifications()
 
   const navigation = [
     { name: 'Vehículos', href: '/vehiculos', icon: Truck },
@@ -114,6 +116,7 @@ const Layout = ({ children }) => {
             <div className="flex items-center gap-x-4 lg:gap-x-6">
               <button
                 type="button"
+                onClick={openNotifications}
                 className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500"
               >
                 <Bell className="h-6 w-6" />
