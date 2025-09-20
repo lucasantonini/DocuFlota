@@ -163,36 +163,47 @@ const Dashboard = () => {
 
           {/* Right side - Main stats */}
           <div className="space-y-4">
-            <StatCard
-              title="Documentos Totales"
-              value={stats.totalDocuments}
-              description="En tu flota"
-              icon={FileText}
-              color="text-primary-600"
-              statusLabel="Activos"
-              statusColor="status-valid"
-              compact={true}
-            />
-            <StatCard
-              title="Vehículos"
-              value={stats.vehicles}
-              description="En operación"
-              icon={Truck}
-              color="text-primary-600"
-              statusLabel="Operativos"
-              statusColor="status-valid"
-              compact={true}
-            />
-            <StatCard
-              title="Personal"
-              value={stats.personnel}
-              description="Choferes activos"
-              icon={Users}
-              color="text-primary-600"
-              statusLabel="Disponibles"
-              statusColor="status-valid"
-              compact={true}
-            />
+            <div className="card">
+              <div className="flex items-center gap-4">
+                <div className="text-4xl font-bold text-primary-600">
+                  {stats.totalDocuments}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-text-secondary">Documentos Totales</p>
+                </div>
+                <div className="p-3 bg-background-100 rounded-lg">
+                  <FileText className="h-6 w-6 text-text-muted" />
+                </div>
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="flex items-center gap-4">
+                <div className="text-4xl font-bold text-primary-600">
+                  {stats.vehicles}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-text-secondary">Vehículos</p>
+                </div>
+                <div className="p-3 bg-background-100 rounded-lg">
+                  <Truck className="h-6 w-6 text-text-muted" />
+                </div>
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="flex items-center gap-4">
+                <div className="text-4xl font-bold text-primary-600">
+                  {stats.personnel}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-text-secondary">Personal</p>
+                </div>
+                <div className="p-3 bg-background-100 rounded-lg">
+                  <Users className="h-6 w-6 text-text-muted" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

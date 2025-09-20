@@ -155,7 +155,7 @@ const Vehicles = () => {
               {stats.valid}
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-text-secondary">Vehículos Vigentes</p>
+              <p className="text-sm font-medium text-text-secondary">Vigentes</p>
             </div>
             <div className="p-3 bg-success-50 rounded-lg">
               <CheckCircle className="h-6 w-6 text-success-600" />
