@@ -12,6 +12,9 @@ import {
 } from 'lucide-react'
 import { useNotifications } from '../contexts/NotificationContext'
 import NotificationPopup from '../components/NotificationPopup'
+import DocumentDistributionChart from '../components/charts/DocumentDistributionChart'
+import DriverRankingChart from '../components/charts/DriverRankingChart'
+import UpcomingExpirationsChart from '../components/charts/UpcomingExpirationsChart'
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -43,6 +46,82 @@ const Dashboard = () => {
       daysLeft: 12
     }
   ]
+
+  // Data for document distribution chart
+  const documentDistributionData = [
+    { name: 'Vigentes', value: stats.validDocuments },
+    { name: 'Por vencer', value: stats.expiringSoon },
+    { name: 'Vencidos', value: stats.expired }
+  ]
+
+  // Data for driver ranking chart
+  const driverRankingData = [
+    {
+      id: 1,
+      name: 'Juan Carlos Pérez',
+      compliance: 95,
+      trend: {
+        type: 'up',
+        delta: '+4%',
+        ariaLabel: 'Mejora del 4% respecto a la semana anterior'
+      }
+    },
+    {
+      id: 2,
+      name: 'María Elena González',
+      compliance: 88,
+      trend: {
+        type: 'down',
+        delta: '-2%',
+        ariaLabel: 'Disminución del 2% respecto a la semana anterior'
+      }
+    },
+    {
+      id: 3,
+      name: 'Roberto Martínez',
+      compliance: 72,
+      trend: {
+        type: 'neutral',
+        delta: '→ 0%',
+        ariaLabel: 'Sin cambios respecto a la semana anterior'
+      }
+    },
+    {
+      id: 4,
+      name: 'Ana López',
+      compliance: 91,
+      trend: {
+        type: 'up',
+        delta: '+3%',
+        ariaLabel: 'Mejora del 3% respecto a la semana anterior'
+      }
+    },
+    {
+      id: 5,
+      name: 'Pedro Sánchez',
+      compliance: 85,
+      trend: {
+        type: 'neutral',
+        delta: '→ 0%',
+        ariaLabel: 'Sin cambios respecto a la semana anterior'
+      }
+    }
+  ]
+
+  // Data for upcoming expirations chart
+  const upcomingExpirationsData = [
+    { month: 'Ene', documents: 8 },
+    { month: 'Feb', documents: 12 },
+    { month: 'Mar', documents: 15 },
+    { month: 'Abr', documents: 6 },
+    { month: 'May', documents: 9 },
+    { month: 'Jun', documents: 11 }
+  ]
+
+  const handleViewAllDrivers = () => {
+    // Navigate to personnel page or open modal
+    console.log('Ver todos los choferes')
+  }
 
   const StatCard = ({ title, value, description, icon: Icon, color = 'text-text-primary', statusLabel, statusColor }) => (
     <div className="card animate-slide-up" role="region" aria-label={`Estadística: ${title}`}>
@@ -155,6 +234,23 @@ const Dashboard = () => {
           statusLabel="Vencidos"
           statusColor="status-danger"
         />
+      </div>
+
+      {/* New Visualizations */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Document Distribution Chart */}
+        <DocumentDistributionChart data={documentDistributionData} />
+        
+        {/* Driver Ranking Chart */}
+        <DriverRankingChart 
+          data={driverRankingData} 
+          onViewAll={handleViewAllDrivers}
+        />
+      </div>
+
+      {/* Upcoming Expirations Chart */}
+      <div className="grid grid-cols-1">
+        <UpcomingExpirationsChart data={upcomingExpirationsData} />
       </div>
 
       {/* Notification Popup */}
