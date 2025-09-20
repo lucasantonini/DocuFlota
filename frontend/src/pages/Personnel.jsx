@@ -74,7 +74,7 @@ const Personnel = () => {
     }
   ])
 
-  const [expandedRows, setExpandedRows] = useState(new Set([3])) // Roberto expanded by default
+  const [expandedRows, setExpandedRows] = useState(new Set()) // No rows expanded by default
   const [uploadModal, setUploadModal] = useState({ isOpen: false, personnelId: null, personnelName: '' })
 
   const stats = {
