@@ -12,8 +12,8 @@ const DocumentDistributionChart = ({ data }) => {
     'Vencidos': '#ec4899'       // danger-500
   }
 
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-    if (percent < 0.05) return null // No mostrar etiquetas para segmentos muy pequeños
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, value }) => {
+    if (value < 1) return null // No mostrar etiquetas para segmentos muy pequeños
     
     const RADIAN = Math.PI / 180
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5
@@ -25,11 +25,12 @@ const DocumentDistributionChart = ({ data }) => {
         x={x} 
         y={y} 
         fill="white" 
-        textAnchor={x > cx ? 'start' : 'end'} 
+        textAnchor="middle" 
         dominantBaseline="central"
-        className="text-xs font-medium"
+        className="text-lg font-bold"
+        style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
       >
-        {`${(percent * 100).toFixed(0)}%`}
+        {value}
       </text>
     )
   }
@@ -71,36 +72,16 @@ const DocumentDistributionChart = ({ data }) => {
         {/* Centro del donut con porcentaje */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center">
-            <div className="text-3xl font-bold text-text-primary">
+            <div className="text-4xl font-bold text-text-primary">
               {percentage}%
             </div>
-            <div className="text-sm text-text-muted">
+            <div className="text-sm text-text-muted font-medium">
               Vigentes
             </div>
           </div>
         </div>
       </div>
 
-      {/* Leyenda */}
-      <div className="mt-6 space-y-3">
-        {data.map((item, index) => (
-          <div key={item.name} className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div 
-                className="w-4 h-4 rounded-full" 
-                style={{ backgroundColor: COLORS[item.name] }}
-                aria-hidden="true"
-              />
-              <span className="text-sm font-medium text-text-primary">
-                {item.name}
-              </span>
-            </div>
-            <div className="text-sm font-semibold text-text-primary">
-              {item.value}
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   )
 }

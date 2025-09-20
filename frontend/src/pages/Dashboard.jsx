@@ -123,9 +123,9 @@ const Dashboard = () => {
     console.log('Ver todos los choferes')
   }
 
-  const StatCard = ({ title, value, description, icon: Icon, color = 'text-text-primary', statusLabel, statusColor }) => (
-    <div className="card animate-slide-up" role="region" aria-label={`Estadística: ${title}`}>
-      <div className="flex items-center justify-between">
+  const StatCard = ({ title, value, description, icon: Icon, color = 'text-text-primary', statusLabel, statusColor, compact = false }) => (
+    <div className={`card animate-slide-up ${compact ? 'p-4' : ''}`} role="region" aria-label={`Estadística: ${title}`}>
+      <div className={`flex items-center ${compact ? 'gap-4' : 'justify-between'}`}>
         <div className="flex-1">
           <p className="text-sm font-medium text-text-secondary mb-2">{title}</p>
           <p className={`text-4xl font-bold ${color} mb-2`}>{value}</p>
@@ -136,8 +136,8 @@ const Dashboard = () => {
             </span>
           )}
         </div>
-        <div className="p-4 bg-background-100 rounded-2xl shadow-soft">
-          <Icon className="h-8 w-8 text-text-secondary" aria-hidden="true" />
+        <div className={`p-4 bg-background-100 rounded-2xl shadow-soft ${compact ? 'p-3' : ''}`}>
+          <Icon className={`text-text-secondary ${compact ? 'h-6 w-6' : 'h-8 w-8'}`} aria-hidden="true" />
         </div>
       </div>
     </div>
@@ -145,72 +145,64 @@ const Dashboard = () => {
 
   return (
     <div className="container-main space-y-8 animate-fade-in">
-      {/* Hero Section */}
-      <div className="relative">
-        <div className="max-w-4xl">
-          <h1 className="text-5xl font-bold text-primary-600 mb-6 leading-tight">
-            Tu flota siempre en regla
-          </h1>
-          <p className="text-xl text-text-secondary mb-4 leading-relaxed">
-            Gestión inteligente de documentos con alertas automáticas y control en tiempo real.
-          </p>
-          <p className="text-lg text-text-muted mb-10 leading-relaxed">
-            Olvídate de vencimientos, centralizá todo en un solo lugar y evitá riesgos innecesarios.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Link 
-              to="/vehiculos" 
-              className="btn-primary flex items-center justify-center gap-2"
-              aria-label="Ir a gestión de documentos de vehículos"
-            >
-              <FileText className="h-5 w-5" />
-              Gestionar Documentos
-            </Link>
-            <button 
-              className="btn-secondary flex items-center justify-center gap-2"
-              aria-label="Comenzar a usar la plataforma"
-            >
-              <Share2 className="h-5 w-5" />
-              Comenzar ahora
-            </button>
+      {/* Hero Section with Main Stats */}
+      <div className="card">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+          {/* Left side - Hero content */}
+          <div className="text-center lg:text-left">
+            <h1 className="text-4xl font-bold text-text-primary mb-4 animate-fade-in">
+              Tu flota siempre en regla
+            </h1>
+            <p className="text-xl text-text-secondary mb-4 animate-fade-in">
+              Gestión inteligente de documentos con alertas automáticas y control en tiempo real.
+            </p>
+            <p className="text-lg text-text-muted animate-fade-in">
+              Olvídate de vencimientos, centralizá todo en un solo lugar y evitá riesgos innecesarios.
+            </p>
           </div>
-        </div>
-        
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 hidden lg:block animate-slide-up">
-          <div className="w-36 h-36 bg-primary-100 rounded-3xl flex items-center justify-center shadow-soft">
-            <FileText className="h-16 w-16 text-primary-600" />
-          </div>
-          <div className="w-20 h-20 bg-primary-600 rounded-2xl flex items-center justify-center mt-6 ml-12 shadow-soft-md">
-            <Share2 className="h-8 w-8 text-white" />
+
+          {/* Right side - Main stats */}
+          <div className="space-y-4">
+            <StatCard
+              title="Documentos Totales"
+              value={stats.totalDocuments}
+              description="En tu flota"
+              icon={FileText}
+              color="text-primary-600"
+              statusLabel="Activos"
+              statusColor="status-valid"
+              compact={true}
+            />
+            <StatCard
+              title="Vehículos"
+              value={stats.vehicles}
+              description="En operación"
+              icon={Truck}
+              color="text-primary-600"
+              statusLabel="Operativos"
+              statusColor="status-valid"
+              compact={true}
+            />
+            <StatCard
+              title="Personal"
+              value={stats.personnel}
+              description="Choferes activos"
+              icon={Users}
+              color="text-primary-600"
+              statusLabel="Disponibles"
+              statusColor="status-valid"
+              compact={true}
+            />
           </div>
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Status Overview */}
       <div className="grid-responsive">
         <StatCard
-          title="Total Documentos"
-          value={stats.totalDocuments}
-          description="Documentos en el sistema"
-          icon={FileText}
-        />
-        <StatCard
-          title="Vehículos"
-          value={stats.vehicles}
-          description="Vehículos registrados"
-          icon={Truck}
-        />
-        <StatCard
-          title="Personal"
-          value={stats.personnel}
-          description="Personal registrado"
-          icon={Users}
-        />
-        <StatCard
-          title="Documentos Válidos"
+          title="Documentos Vigentes"
           value={stats.validDocuments}
-          description="Documentos al día"
+          description="En regla"
           icon={CheckCircle}
           color="text-success-600"
           statusLabel="Vigentes"
@@ -219,10 +211,10 @@ const Dashboard = () => {
         <StatCard
           title="Por Vencer"
           value={stats.expiringSoon}
-          description="Próximos a vencer"
+          description="Próximos 30 días"
           icon={Clock}
           color="text-warning-600"
-          statusLabel="Próximos a vencer"
+          statusLabel="Atención"
           statusColor="status-warning"
         />
         <StatCard
