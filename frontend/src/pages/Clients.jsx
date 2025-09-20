@@ -186,7 +186,6 @@ const Clients = () => {
                     <div className="flex items-center gap-3">
                       <div className="text-sm">
                         <div className="text-lg font-bold text-gray-900">{client.documents.total}</div>
-                        <div className="text-xs text-gray-500">documentos requeridos</div>
                       </div>
                       <button className="text-primary-600 hover:text-primary-900 text-sm font-medium">
                         Ver detalles
