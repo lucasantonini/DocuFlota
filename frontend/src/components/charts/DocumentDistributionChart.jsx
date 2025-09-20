@@ -1,5 +1,5 @@
 import React from 'react'
-import { PieChart, Pie, Cell, ResponsiveContainer, LabelList } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 
 const DocumentDistributionChart = ({ data }) => {
   const total = data.reduce((sum, item) => sum + item.value, 0)
@@ -12,19 +12,13 @@ const DocumentDistributionChart = ({ data }) => {
     'Vencidos': '#ec4899'       // danger-500
   }
 
-  const renderCustomLabel = (entry, index, props) => {
+  const renderCustomLabel = (entry) => {
     if (entry.value < 1) return null // No mostrar etiquetas para segmentos muy pequeños
-    
-    const { cx, cy, midAngle, innerRadius, outerRadius } = props
-    const RADIAN = Math.PI / 180
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5
-    const x = cx + radius * Math.cos(-midAngle * RADIAN)
-    const y = cy + radius * Math.sin(-midAngle * RADIAN)
     
     return (
       <text 
-        x={x} 
-        y={y} 
+        x="50%" 
+        y="50%" 
         fill="white" 
         textAnchor="middle" 
         dominantBaseline="central"
@@ -56,6 +50,7 @@ const DocumentDistributionChart = ({ data }) => {
               outerRadius={120}
               paddingAngle={2}
               dataKey="value"
+              label={renderCustomLabel}
             >
               {data.map((entry, index) => (
                 <Cell 
@@ -63,9 +58,6 @@ const DocumentDistributionChart = ({ data }) => {
                   fill={COLORS[entry.name]} 
                 />
               ))}
-              <LabelList 
-                content={renderCustomLabel}
-              />
             </Pie>
           </PieChart>
         </ResponsiveContainer>
