@@ -208,36 +208,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Status Overview */}
-      <div className="grid-responsive">
-        <StatCard
-          title="Documentos Vigentes"
-          value={stats.validDocuments}
-          description="En regla"
-          icon={CheckCircle}
-          color="text-success-600"
-          statusLabel="Vigentes"
-          statusColor="status-valid"
-        />
-        <StatCard
-          title="Por Vencer"
-          value={stats.expiringSoon}
-          description="Próximos 30 días"
-          icon={Clock}
-          color="text-warning-600"
-          statusLabel="Atención"
-          statusColor="status-warning"
-        />
-        <StatCard
-          title="Vencidos"
-          value={stats.expired}
-          description="Requieren atención"
-          icon={AlertTriangle}
-          color="text-danger-600"
-          statusLabel="Vencidos"
-          statusColor="status-danger"
-        />
-      </div>
 
       {/* New Visualizations */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

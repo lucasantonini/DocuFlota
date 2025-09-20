@@ -39,11 +39,8 @@ const DocumentDistributionChart = ({ data }) => {
     <div className="card" role="region" aria-label="Distribución de documentos">
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-text-primary mb-2">
-          Distribución de Documentos
-        </h3>
-        <p className="text-sm text-text-muted">
           Estado actual de la documentación
-        </p>
+        </h3>
       </div>
       
       <div className="relative">
