@@ -126,15 +126,8 @@ const Clients = () => {
         </div>
       </div>
 
-      {/* Clients List */}
+      {/* Clients Table */}
       <div className="card">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-medium text-gray-900">Lista de Clientes</h2>
-          <button className="btn-primary flex items-center gap-2">
-            <Plus className="h-5 w-5" />
-            Agregar Cliente
-          </button>
-        </div>
 
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
