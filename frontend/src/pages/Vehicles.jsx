@@ -6,7 +6,10 @@ import {
   ChevronDown, 
   ChevronRight,
   Info,
-  FileText
+  FileText,
+  CheckCircle,
+  Clock,
+  AlertTriangle
 } from 'lucide-react'
 
 const Vehicles = () => {
@@ -63,6 +66,14 @@ const Vehicles = () => {
   ])
 
   const [expandedRows, setExpandedRows] = useState(new Set())
+
+  // Calculate vehicle statistics
+  const stats = {
+    total: vehicles.length,
+    valid: vehicles.filter(v => v.globalStatus === 'valid').length,
+    warning: vehicles.filter(v => v.globalStatus === 'warning').length,
+    expired: vehicles.filter(v => v.globalStatus === 'expired').length
+  }
 
   const toggleRow = (vehicleId) => {
     const newExpanded = new Set(expandedRows)
@@ -124,10 +135,58 @@ const Vehicles = () => {
           <h1 className="text-3xl font-bold text-gray-900">Vehículos</h1>
           <p className="text-gray-600">Listado de unidades y su documentación habilitante</p>
         </div>
-        <button className="btn-primary flex items-center gap-2">
-          <Plus className="h-5 w-5" />
-          Añadir vehículo
-        </button>
+        <div className="flex items-center gap-4">
+          <div className="bg-gray-100 px-4 py-2 rounded-lg">
+            <span className="text-sm text-gray-600">Total: </span>
+            <span className="text-lg font-bold text-gray-900">{vehicles.length}</span>
+          </div>
+          <button className="btn-primary flex items-center gap-2">
+            <Plus className="h-5 w-5" />
+            Añadir vehículo
+          </button>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Vehículos Vigentes</p>
+              <p className="text-3xl font-bold text-success-600">{stats.valid}</p>
+              <p className="text-sm text-gray-500">Documentación al día</p>
+            </div>
+            <div className="p-3 bg-success-50 rounded-lg">
+              <CheckCircle className="h-6 w-6 text-success-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Por Vencer</p>
+              <p className="text-3xl font-bold text-warning-600">{stats.warning}</p>
+              <p className="text-sm text-gray-500">Próximos a vencer</p>
+            </div>
+            <div className="p-3 bg-warning-50 rounded-lg">
+              <Clock className="h-6 w-6 text-warning-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Vencidos</p>
+              <p className="text-3xl font-bold text-danger-600">{stats.expired}</p>
+              <p className="text-sm text-gray-500">Vencidos</p>
+            </div>
+            <div className="p-3 bg-danger-50 rounded-lg">
+              <AlertTriangle className="h-6 w-6 text-danger-600" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Vehicles Table */}
