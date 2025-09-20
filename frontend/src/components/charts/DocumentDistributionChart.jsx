@@ -1,5 +1,5 @@
 import React from 'react'
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, LabelList } from 'recharts'
 
 const DocumentDistributionChart = ({ data }) => {
   const total = data.reduce((sum, item) => sum + item.value, 0)
@@ -10,6 +10,24 @@ const DocumentDistributionChart = ({ data }) => {
     'Vigentes': '#22c55e',      // success-500
     'Por vencer': '#f59e0b',    // warning-500
     'Vencidos': '#ec4899'       // danger-500
+  }
+
+  const renderCustomLabel = (entry) => {
+    if (entry.value < 1) return null // No mostrar etiquetas para segmentos muy pequeños
+    
+    return (
+      <text 
+        x="50%" 
+        y="50%" 
+        fill="white" 
+        textAnchor="middle" 
+        dominantBaseline="central"
+        className="text-lg font-bold"
+        style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}
+      >
+        {entry.value}
+      </text>
+    )
   }
 
 
@@ -39,6 +57,10 @@ const DocumentDistributionChart = ({ data }) => {
                   fill={COLORS[entry.name]} 
                 />
               ))}
+              <LabelList 
+                content={renderCustomLabel}
+                position="center"
+              />
             </Pie>
           </PieChart>
         </ResponsiveContainer>
