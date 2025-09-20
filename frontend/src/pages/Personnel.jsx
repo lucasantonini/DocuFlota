@@ -143,6 +143,15 @@ const Personnel = () => {
           </span>
         </div>
       )
+    } else if (document.status === 'warning') {
+      return (
+        <div className="flex items-center gap-2">
+          <span className="status-warning">Por vencer</span>
+          <span className="text-sm text-gray-500">
+            {document.daysRemaining} días restantes
+          </span>
+        </div>
+      )
     }
     return <span className="status-warning">Por vencer</span>
   }
