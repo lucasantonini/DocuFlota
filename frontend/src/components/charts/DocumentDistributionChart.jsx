@@ -1,5 +1,5 @@
 import React from 'react'
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, LabelList } from 'recharts'
 
 const DocumentDistributionChart = ({ data }) => {
   const total = data.reduce((sum, item) => sum + item.value, 0)
@@ -17,8 +17,6 @@ const DocumentDistributionChart = ({ data }) => {
     
     return (
       <text 
-        x="50%" 
-        y="50%" 
         fill="white" 
         textAnchor="middle" 
         dominantBaseline="central"
@@ -50,7 +48,6 @@ const DocumentDistributionChart = ({ data }) => {
               outerRadius={120}
               paddingAngle={2}
               dataKey="value"
-              label={renderCustomLabel}
             >
               {data.map((entry, index) => (
                 <Cell 
@@ -58,6 +55,10 @@ const DocumentDistributionChart = ({ data }) => {
                   fill={COLORS[entry.name]} 
                 />
               ))}
+              <LabelList 
+                content={renderCustomLabel}
+                position="inside"
+              />
             </Pie>
           </PieChart>
         </ResponsiveContainer>
