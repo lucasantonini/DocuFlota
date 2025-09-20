@@ -190,11 +190,12 @@ const Personnel = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Personal Vigente</p>
-              <p className="text-3xl font-bold text-success-600">{stats.valid}</p>
-              <p className="text-sm text-gray-500">Documentación al día</p>
+          <div className="flex items-center gap-4">
+            <div className="text-4xl font-bold text-success-600">
+              {stats.valid}
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-text-secondary">Personal Vigente</p>
             </div>
             <div className="p-3 bg-success-50 rounded-lg">
               <CheckCircle className="h-6 w-6 text-success-600" />
@@ -203,11 +204,12 @@ const Personnel = () => {
         </div>
 
         <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Por Vencer</p>
-              <p className="text-3xl font-bold text-warning-600">{stats.expiringSoon}</p>
-              <p className="text-sm text-gray-500">Próximos a vencer</p>
+          <div className="flex items-center gap-4">
+            <div className="text-4xl font-bold text-warning-600">
+              {stats.expiringSoon}
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-text-secondary">Por Vencer</p>
             </div>
             <div className="p-3 bg-warning-50 rounded-lg">
               <Clock className="h-6 w-6 text-warning-600" />
@@ -216,11 +218,12 @@ const Personnel = () => {
         </div>
 
         <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Vencidos</p>
-              <p className="text-3xl font-bold text-danger-600">{stats.expired}</p>
-              <p className="text-sm text-gray-500">Vencidos</p>
+          <div className="flex items-center gap-4">
+            <div className="text-4xl font-bold text-danger-600">
+              {stats.expired}
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-text-secondary">Vencidos</p>
             </div>
             <div className="p-3 bg-danger-50 rounded-lg">
               <AlertTriangle className="h-6 w-6 text-danger-600" />

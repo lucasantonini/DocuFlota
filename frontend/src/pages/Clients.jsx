@@ -83,44 +83,43 @@ const Clients = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Clientes</p>
-              <p className="text-3xl font-bold text-gray-900">{clients.length}</p>
-              <p className="text-sm text-gray-500">Clientes registrados</p>
+          <div className="flex items-center gap-4">
+            <div className="text-4xl font-bold text-text-primary">
+              {clients.length}
             </div>
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <Building2 className="h-6 w-6 text-gray-600" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-text-secondary">Total Clientes</p>
             </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Documentos Requeridos</p>
-              <p className="text-3xl font-bold text-gray-900">
-                {clients.reduce((sum, client) => sum + client.documents.total, 0)}
-              </p>
-              <p className="text-sm text-gray-500">En el sistema</p>
-            </div>
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <FileText className="h-6 w-6 text-gray-600" />
+            <div className="p-3 bg-background-100 rounded-lg">
+              <Building2 className="h-6 w-6 text-text-muted" />
             </div>
           </div>
         </div>
 
         <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Promedio por Cliente</p>
-              <p className="text-3xl font-bold text-gray-900">
-                {Math.round(clients.reduce((sum, client) => sum + client.documents.total, 0) / clients.length)}
-              </p>
-              <p className="text-sm text-gray-500">Documentos por cliente</p>
+          <div className="flex items-center gap-4">
+            <div className="text-4xl font-bold text-text-primary">
+              {clients.reduce((sum, client) => sum + client.documents.total, 0)}
             </div>
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <CheckCircle className="h-6 w-6 text-gray-600" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-text-secondary">Documentos Requeridos</p>
+            </div>
+            <div className="p-3 bg-background-100 rounded-lg">
+              <FileText className="h-6 w-6 text-text-muted" />
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="flex items-center gap-4">
+            <div className="text-4xl font-bold text-text-primary">
+              {Math.round(clients.reduce((sum, client) => sum + client.documents.total, 0) / clients.length)}
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-text-secondary">Promedio por Cliente</p>
+            </div>
+            <div className="p-3 bg-background-100 rounded-lg">
+              <CheckCircle className="h-6 w-6 text-text-muted" />
             </div>
           </div>
         </div>
