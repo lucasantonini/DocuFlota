@@ -35,37 +35,43 @@ const Layout = ({ children }) => {
   const isActive = (path) => location.pathname === path
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background-50">
       {/* Mobile sidebar */}
       <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
-        <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white">
-          <div className="flex h-16 items-center justify-between px-4">
-            <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
-              <Truck className="h-8 w-8 text-primary-600" />
-              <span className="ml-2 text-xl font-bold text-gray-900">DocuFlota</span>
+        <div className="fixed inset-0 bg-text-primary bg-opacity-75" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white shadow-soft-lg">
+          <div className="flex h-16 items-center justify-between px-6">
+            <Link 
+              to="/" 
+              className="flex items-center hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-lg p-2"
+              aria-label="Ir al dashboard principal"
+            >
+              <Truck className="h-8 w-8 text-primary-600" aria-hidden="true" />
+              <span className="ml-3 text-xl font-bold text-text-primary">DocuFlota</span>
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-text-muted hover:text-text-primary p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              aria-label="Cerrar menú de navegación"
             >
-              <X className="h-6 w-6" />
+              <X className="h-6 w-6" aria-hidden="true" />
             </button>
           </div>
-          <nav className="flex-1 px-4 py-4">
+          <nav className="flex-1 px-6 py-6" role="navigation" aria-label="Navegación principal">
             {navigation.map((item) => {
               const Icon = item.icon
               return (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md mb-1 ${
+                  className={`group flex items-center px-4 py-3 text-sm font-medium rounded-xl mb-2 transition-all duration-200 ${
                     isActive(item.href)
-                      ? 'bg-primary-100 text-primary-700'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-primary-100 text-primary-700 shadow-soft'
+                      : 'text-text-secondary hover:bg-background-100 hover:text-text-primary'
                   }`}
+                  aria-current={isActive(item.href) ? 'page' : undefined}
                 >
-                  <Icon className="mr-3 h-5 w-5" />
+                  <Icon className="mr-3 h-5 w-5" aria-hidden="true" />
                   {item.name}
                 </Link>
               )
@@ -76,30 +82,35 @@ const Layout = ({ children }) => {
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
-          <div className="flex h-16 items-center px-4">
-            <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
-              <Truck className="h-8 w-8 text-primary-600" />
-              <div className="ml-2">
-                <span className="text-xl font-bold text-gray-900">DocuFlota</span>
-                <p className="text-sm text-gray-500">Gestión de Documentación</p>
+        <div className="flex flex-col flex-grow bg-white border-r border-border-light shadow-soft">
+          <div className="flex h-20 items-center px-6">
+            <Link 
+              to="/" 
+              className="flex items-center hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-lg p-2"
+              aria-label="Ir al dashboard principal"
+            >
+              <Truck className="h-8 w-8 text-primary-600" aria-hidden="true" />
+              <div className="ml-3">
+                <span className="text-xl font-bold text-text-primary">DocuFlota</span>
+                <p className="text-sm text-text-muted">Gestión de Documentación</p>
               </div>
             </Link>
           </div>
-          <nav className="flex-1 px-4 py-4">
+          <nav className="flex-1 px-6 py-6" role="navigation" aria-label="Navegación principal">
             {navigation.map((item) => {
               const Icon = item.icon
               return (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md mb-1 ${
+                  className={`group flex items-center px-4 py-3 text-sm font-medium rounded-xl mb-2 transition-all duration-200 ${
                     isActive(item.href)
-                      ? 'bg-primary-100 text-primary-700'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-primary-100 text-primary-700 shadow-soft'
+                      : 'text-text-secondary hover:bg-background-100 hover:text-text-primary'
                   }`}
+                  aria-current={isActive(item.href) ? 'page' : undefined}
                 >
-                  <Icon className="mr-3 h-5 w-5" />
+                  <Icon className="mr-3 h-5 w-5" aria-hidden="true" />
                   {item.name}
                 </Link>
               )
@@ -111,13 +122,14 @@ const Layout = ({ children }) => {
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Top navigation */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-border-light bg-white px-4 shadow-soft sm:gap-x-6 sm:px-6 lg:px-8">
           <button
             type="button"
-            className="-m-2.5 p-2.5 text-gray-700 lg:hidden"
+            className="-m-2.5 p-2.5 text-text-primary lg:hidden focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg"
             onClick={() => setSidebarOpen(true)}
+            aria-label="Abrir menú de navegación"
           >
-            <Menu className="h-6 w-6" />
+            <Menu className="h-6 w-6" aria-hidden="true" />
           </button>
 
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
@@ -126,15 +138,17 @@ const Layout = ({ children }) => {
               <button
                 type="button"
                 onClick={openNotifications}
-                className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500"
+                className="-m-2.5 p-2.5 text-text-muted hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg transition-colors"
+                aria-label="Ver notificaciones"
               >
-                <Bell className="h-6 w-6" />
+                <Bell className="h-6 w-6" aria-hidden="true" />
               </button>
               <button
                 type="button"
-                className="-m-1.5 p-1.5 text-gray-400 hover:text-gray-500"
+                className="-m-1.5 p-1.5 text-text-muted hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg transition-colors"
+                aria-label="Abrir perfil de usuario"
               >
-                <User className="h-6 w-6" />
+                <User className="h-6 w-6" aria-hidden="true" />
               </button>
             </div>
           </div>
