@@ -65,11 +65,6 @@ const Clients = () => {
     }
   ])
 
-  const getStatusBadge = (status) => {
-    return status === 'active' 
-      ? <span className="status-valid">Activo</span>
-      : <span className="status-warning">Inactivo</span>
-  }
 
   return (
     <div className="space-y-6">
@@ -86,7 +81,7 @@ const Clients = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
@@ -103,37 +98,7 @@ const Clients = () => {
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Vehículos</p>
-              <p className="text-3xl font-bold text-gray-900">
-                {clients.reduce((sum, client) => sum + client.vehicles, 0)}
-              </p>
-              <p className="text-sm text-gray-500">En toda la flota</p>
-            </div>
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <Truck className="h-6 w-6 text-gray-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Personal</p>
-              <p className="text-3xl font-bold text-gray-900">
-                {clients.reduce((sum, client) => sum + client.personnel, 0)}
-              </p>
-              <p className="text-sm text-gray-500">En toda la flota</p>
-            </div>
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <Users className="h-6 w-6 text-gray-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Documentos</p>
+              <p className="text-sm font-medium text-gray-600">Documentos Requeridos</p>
               <p className="text-3xl font-bold text-gray-900">
                 {clients.reduce((sum, client) => sum + client.documents.total, 0)}
               </p>
@@ -141,6 +106,21 @@ const Clients = () => {
             </div>
             <div className="p-3 bg-gray-50 rounded-lg">
               <FileText className="h-6 w-6 text-gray-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Promedio por Cliente</p>
+              <p className="text-3xl font-bold text-gray-900">
+                {Math.round(clients.reduce((sum, client) => sum + client.documents.total, 0) / clients.length)}
+              </p>
+              <p className="text-sm text-gray-500">Documentos por cliente</p>
+            </div>
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <CheckCircle className="h-6 w-6 text-gray-600" />
             </div>
           </div>
         </div>
@@ -167,16 +147,13 @@ const Clients = () => {
                   Contacto
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Estado
+                  Vehículos Habilitados
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Vehículos
+                  Personal Habilitado
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Personal
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Documentos
+                  Documentos Requeridos
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Acciones
@@ -199,9 +176,6 @@ const Clients = () => {
                       <div className="text-sm text-gray-500">{client.phone}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {getStatusBadge(client.status)}
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {client.vehicles}
                   </td>
@@ -209,21 +183,14 @@ const Clients = () => {
                     {client.personnel}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                       <div className="text-sm">
-                        <div className="flex items-center gap-1">
-                          <CheckCircle className="h-4 w-4 text-success-600" />
-                          <span className="text-success-600 font-medium">{client.documents.valid}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-4 w-4 text-warning-600" />
-                          <span className="text-warning-600 font-medium">{client.documents.expiringSoon}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <AlertTriangle className="h-4 w-4 text-danger-600" />
-                          <span className="text-danger-600 font-medium">{client.documents.expired}</span>
-                        </div>
+                        <div className="text-lg font-bold text-gray-900">{client.documents.total}</div>
+                        <div className="text-xs text-gray-500">documentos requeridos</div>
                       </div>
+                      <button className="text-primary-600 hover:text-primary-900 text-sm font-medium">
+                        Ver detalles
+                      </button>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
