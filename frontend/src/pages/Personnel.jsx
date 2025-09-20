@@ -229,97 +229,123 @@ const Personnel = () => {
         </div>
       </div>
 
-      {/* Personnel List */}
+      {/* Personnel Table */}
       <div className="card">
-        <div className="mb-6">
-          <h2 className="text-lg font-medium text-gray-900">Lista de Personal</h2>
-        </div>
-
-        <div className="space-y-4">
-          {personnel.map((person) => (
-            <div key={person.id} className="border border-gray-200 rounded-lg">
-              {/* Personnel Row */}
-              <div className="flex items-center justify-between p-4 hover:bg-gray-50">
-                  <div className="flex items-center gap-4">
-                    <button
-                      onClick={() => toggleRow(person.id)}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      {expandedRows.has(person.id) ? (
-                        <ChevronDown className="h-5 w-5" />
-                      ) : (
-                        <ChevronRight className="h-5 w-5" />
-                      )}
-                    </button>
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{person.name}</div>
-                    </div>
-                  </div>
-                
-                <div className="flex items-center gap-6">
-                  {getStatusBadge(person.status)}
-                  <div className="text-sm text-gray-500">
-                    Próximo vencimiento: {formatDate(person.nextExpiration)}
-                  </div>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => handleUploadClick(person.id, person.name)}
-                      className="flex items-center gap-1 text-primary-600 hover:text-primary-900"
-                    >
-                      <Upload className="h-4 w-4" />
-                      Cargar
-                    </button>
-                    <button className="flex items-center gap-1 text-gray-600 hover:text-gray-900">
-                      <History className="h-4 w-4" />
-                      Historial
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Expanded Documents */}
-              {expandedRows.has(person.id) && person.documents.length > 0 && (
-                <div className="border-t border-gray-200 bg-gray-50 p-4">
-                  <h4 className="text-sm font-medium text-gray-900 mb-4">
-                    Documentos de la persona
-                  </h4>
-                  <div className="space-y-3">
-                    {person.documents.map((document) => (
-                      <div key={document.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                        <div className="flex items-center gap-3">
-                          <FileText className="h-5 w-5 text-gray-400" />
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {document.name}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              Vence: {formatDate(document.expirationDate)}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          {getDocumentStatus(document)}
-                          <div className="flex gap-2">
-                            <button 
-                              onClick={() => handleUploadClick(person.id, person.name)}
-                              className="flex items-center gap-1 text-primary-600 hover:text-primary-900 text-sm"
-                            >
-                              <Upload className="h-4 w-4" />
-                              Cargar documento
-                            </button>
-                            <button className="flex items-center gap-1 text-gray-600 hover:text-gray-900 text-sm">
-                              <History className="h-4 w-4" />
-                              Ver historial
-                            </button>
-                          </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Personal
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Estado Global
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Próximo Vencimiento
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Acciones
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {personnel.map((person) => (
+                <React.Fragment key={person.id}>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <button
+                          onClick={() => toggleRow(person.id)}
+                          className="mr-3 text-gray-400 hover:text-gray-600"
+                        >
+                          {expandedRows.has(person.id) ? (
+                            <ChevronDown className="h-5 w-5" />
+                          ) : (
+                            <ChevronRight className="h-5 w-5" />
+                          )}
+                        </button>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{person.name}</div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getStatusBadge(person.status)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {formatDate(person.nextExpiration)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => handleUploadClick(person.id, person.name)}
+                          className="flex items-center gap-1 text-primary-600 hover:text-primary-900"
+                        >
+                          <Upload className="h-4 w-4" />
+                          Cargar
+                        </button>
+                        <button className="flex items-center gap-1 text-gray-600 hover:text-gray-900">
+                          <History className="h-4 w-4" />
+                          Historial
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    </td>
+                  </tr>
+                  
+                  {/* Expanded Documents Row */}
+                  {expandedRows.has(person.id) && person.documents.length > 0 && (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-4 bg-gray-50">
+                        <div className="ml-8">
+                          <h4 className="text-sm font-medium text-gray-900 mb-4">
+                            Documentos del personal
+                          </h4>
+                          <div className="space-y-4">
+                            {person.documents.map((document) => (
+                              <div key={document.id} className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                                <div className="flex items-center gap-4">
+                                  <FileText className="h-5 w-5 text-gray-400" />
+                                  <div>
+                                    <div className="text-sm font-medium text-gray-900">
+                                      {document.name}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                      Vence: {formatDate(document.expirationDate)}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                  {getDocumentStatus(document)}
+                                  <div className="flex gap-2">
+                                    <button 
+                                      onClick={() => handleUploadClick(person.id, person.name)}
+                                      className="flex items-center gap-1 text-primary-600 hover:text-primary-900 text-sm"
+                                    >
+                                      <Upload className="h-4 w-4" />
+                                      Cargar documento
+                                    </button>
+                                    <button className="flex items-center gap-1 text-gray-600 hover:text-gray-900 text-sm">
+                                      <History className="h-4 w-4" />
+                                      Ver historial
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
