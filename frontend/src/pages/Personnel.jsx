@@ -78,6 +78,7 @@ const Personnel = () => {
 
   const stats = {
     total: personnel.length,
+    valid: personnel.filter(p => p.status === 'valid').length,
     expiringSoon: personnel.filter(p => p.status === 'warning').length,
     expired: personnel.filter(p => p.status === 'expired').length
   }
@@ -173,10 +174,16 @@ const Personnel = () => {
           <h1 className="text-3xl font-bold text-gray-900">Personal</h1>
           <p className="text-gray-600">Choferes y documentación habilitante</p>
         </div>
-        <button className="btn-primary flex items-center gap-2">
-          <Plus className="h-5 w-5" />
-          Agregar Personal
-        </button>
+        <div className="flex items-center gap-4">
+          <div className="bg-gray-100 px-4 py-2 rounded-lg">
+            <span className="text-sm text-gray-600">Total: </span>
+            <span className="text-lg font-bold text-gray-900">{stats.total}</span>
+          </div>
+          <button className="btn-primary flex items-center gap-2">
+            <Plus className="h-5 w-5" />
+            Agregar Personal
+          </button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -184,12 +191,12 @@ const Personnel = () => {
         <div className="card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Personal</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
-              <p className="text-sm text-gray-500">Personal registrado</p>
+              <p className="text-sm font-medium text-gray-600">Personal Vigente</p>
+              <p className="text-3xl font-bold text-success-600">{stats.valid}</p>
+              <p className="text-sm text-gray-500">Documentación al día</p>
             </div>
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <Users className="h-6 w-6 text-gray-600" />
+            <div className="p-3 bg-success-50 rounded-lg">
+              <CheckCircle className="h-6 w-6 text-success-600" />
             </div>
           </div>
         </div>
