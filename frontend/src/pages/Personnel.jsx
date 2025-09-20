@@ -17,7 +17,6 @@ const Personnel = () => {
     {
       id: 1,
       name: 'Juan Carlos Pérez',
-      role: 'Chofer',
       status: 'valid',
       nextExpiration: '2024-06-15',
       documents: []
@@ -25,7 +24,6 @@ const Personnel = () => {
     {
       id: 2,
       name: 'María Elena González',
-      role: 'Chofer',
       status: 'warning',
       nextExpiration: '2024-02-20',
       documents: []
@@ -33,9 +31,8 @@ const Personnel = () => {
     {
       id: 3,
       name: 'Roberto Martínez',
-      role: 'Administrativo',
       status: 'expired',
-      nextExpiration: '2024-04-20',
+      nextExpiration: '2024-03-15', // Registro de Conducir (más próximo vencido)
       documents: [
         {
           id: 1,
@@ -50,6 +47,27 @@ const Personnel = () => {
           expirationDate: '2024-09-30',
           status: 'valid',
           daysRemaining: 155
+        },
+        {
+          id: 3,
+          name: 'Registro de Conducir',
+          expirationDate: '2024-03-15',
+          status: 'expired',
+          daysOverdue: 20
+        },
+        {
+          id: 4,
+          name: 'Seguro ART',
+          expirationDate: '2024-05-10',
+          status: 'warning',
+          daysRemaining: 25
+        },
+        {
+          id: 5,
+          name: 'Certificado de Carga Peligrosa',
+          expirationDate: '2024-12-31',
+          status: 'valid',
+          daysRemaining: 280
         }
       ]
     }
@@ -205,22 +223,21 @@ const Personnel = () => {
             <div key={person.id} className="border border-gray-200 rounded-lg">
               {/* Personnel Row */}
               <div className="flex items-center justify-between p-4 hover:bg-gray-50">
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => toggleRow(person.id)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    {expandedRows.has(person.id) ? (
-                      <ChevronDown className="h-5 w-5" />
-                    ) : (
-                      <ChevronRight className="h-5 w-5" />
-                    )}
-                  </button>
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">{person.name}</div>
-                    <div className="text-sm text-gray-500">{person.role}</div>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => toggleRow(person.id)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      {expandedRows.has(person.id) ? (
+                        <ChevronDown className="h-5 w-5" />
+                      ) : (
+                        <ChevronRight className="h-5 w-5" />
+                      )}
+                    </button>
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{person.name}</div>
+                    </div>
                   </div>
-                </div>
                 
                 <div className="flex items-center gap-6">
                   {getStatusBadge(person.status)}
