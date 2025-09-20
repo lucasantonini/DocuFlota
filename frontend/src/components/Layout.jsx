@@ -15,7 +15,16 @@ import { useNotifications } from '../contexts/NotificationContext'
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
-  const { openNotifications } = useNotifications()
+  
+  // Safely get notifications context, with fallback
+  let openNotifications = () => {}
+  try {
+    const notifications = useNotifications()
+    openNotifications = notifications.openNotifications
+  } catch (error) {
+    // Context not available, use fallback
+    console.log('Notification context not available')
+  }
 
   const navigation = [
     { name: 'Vehículos', href: '/vehiculos', icon: Truck },

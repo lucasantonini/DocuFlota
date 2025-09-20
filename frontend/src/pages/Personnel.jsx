@@ -8,7 +8,8 @@ import {
   Users,
   Clock,
   AlertTriangle,
-  FileText
+  FileText,
+  CheckCircle
 } from 'lucide-react'
 import UploadModal from '../components/UploadModal'
 
