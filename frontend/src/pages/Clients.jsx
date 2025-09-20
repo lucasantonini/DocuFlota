@@ -187,9 +187,6 @@ const Clients = () => {
                       <div className="text-sm">
                         <div className="text-lg font-bold text-gray-900">{client.documents.total}</div>
                       </div>
-                      <button className="text-primary-600 hover:text-primary-900 text-sm font-medium">
-                        Ver detalles
-                      </button>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
