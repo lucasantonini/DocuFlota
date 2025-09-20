@@ -12,13 +12,19 @@ const DocumentDistributionChart = ({ data }) => {
     'Vencidos': '#ec4899'       // danger-500
   }
 
-  const renderCustomLabel = (entry) => {
+  const renderCustomLabel = (entry, index, props) => {
     if (entry.value < 1) return null // No mostrar etiquetas para segmentos muy pequeños
+    
+    const { cx, cy, midAngle, innerRadius, outerRadius } = props
+    const RADIAN = Math.PI / 180
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5
+    const x = cx + radius * Math.cos(-midAngle * RADIAN)
+    const y = cy + radius * Math.sin(-midAngle * RADIAN)
     
     return (
       <text 
-        x="50%" 
-        y="50%" 
+        x={x} 
+        y={y} 
         fill="white" 
         textAnchor="middle" 
         dominantBaseline="central"
@@ -59,7 +65,6 @@ const DocumentDistributionChart = ({ data }) => {
               ))}
               <LabelList 
                 content={renderCustomLabel}
-                position="center"
               />
             </Pie>
           </PieChart>
