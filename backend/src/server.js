@@ -12,10 +12,14 @@ import personnelRoutes from './routes/personnel.js'
 import clientRoutes from './routes/clients.js'
 import documentRoutes from './routes/documents.js'
 import dashboardRoutes from './routes/dashboard.js'
+import reportRoutes from './routes/reports.js'
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler.js'
 import { notFound } from './middleware/notFound.js'
+
+// Import services
+import { startDailyReportSchedule } from './services/dailyReportService.js'
 
 // Load environment variables
 dotenv.config()
@@ -42,6 +46,7 @@ app.use('/api/personnel', personnelRoutes)
 app.use('/api/clients', clientRoutes)
 app.use('/api/documents', documentRoutes)
 app.use('/api/dashboard', dashboardRoutes)
+app.use('/api/reports', reportRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -60,6 +65,14 @@ app.use(errorHandler)
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`)
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`)
+  
+  // Iniciar el cron job para reportes diarios
+  try {
+    startDailyReportSchedule()
+    console.log('📧 Cron job de reportes diarios iniciado')
+  } catch (error) {
+    console.error('❌ Error iniciando cron job:', error)
+  }
 })
 
 export default app
