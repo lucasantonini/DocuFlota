@@ -14,35 +14,32 @@ Una plataforma SaaS para empresas de logística que necesitan gestionar la docum
 ## 🏗️ Arquitectura
 
 - **Frontend**: React + Tailwind CSS + Vite
-- **Backend**: Node.js + Express + PostgreSQL
-- **Base de Datos**: PostgreSQL
-- **Contenedores**: Docker + Docker Compose
+- **Backend**: Node.js + Express + Supabase
+- **Base de Datos**: Supabase (PostgreSQL)
+- **Despliegue**: Sin contenedores, desarrollo local
 
 ## 📋 Requisitos Previos
 
 - Node.js 18+
-- Docker y Docker Compose
+- Cuenta de Supabase
 - Git
 
 ## 🚀 Instalación Rápida
 
-### Opción 1: Docker Compose (Recomendado)
+### 1. Configurar Supabase
+
+1. Crear una cuenta en [Supabase](https://supabase.com)
+2. Crear un nuevo proyecto
+3. En el SQL Editor, ejecutar el contenido de `backend/supabase-schema.sql`
+4. Copiar las credenciales de tu proyecto
+
+### 2. Configurar el Proyecto
 
 ```bash
 # Clonar el repositorio
 git clone <repository-url>
 cd docuflota
 
-# Iniciar todos los servicios
-docker-compose up --build
-
-# En otra terminal, poblar la base de datos
-docker-compose exec backend npm run seed
-```
-
-### Opción 2: Desarrollo Local
-
-```bash
 # Instalar dependencias del proyecto principal
 npm install
 
@@ -59,13 +56,13 @@ cd ..
 # Configurar variables de entorno
 cp backend/env.example backend/.env
 
-# Iniciar PostgreSQL (usando Docker)
-docker run --name docuflota-postgres -e POSTGRES_DB=docuflota -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:15-alpine
+# Editar backend/.env con tus credenciales de Supabase:
+# SUPABASE_URL=tu-url-de-supabase
+# SUPABASE_ANON_KEY=tu-anon-key
+# SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key
 
 # Poblar la base de datos
-cd backend
 npm run seed
-cd ..
 
 # Iniciar en modo desarrollo
 npm run dev
@@ -107,9 +104,9 @@ docuflota/
 │   │   ├── models/          # Modelos de base de datos
 │   │   ├── middleware/      # Middleware personalizado
 │   │   └── ...
+│   ├── supabase-schema.sql  # Esquema de base de datos
 │   └── package.json
 ├── uploads/                  # Archivos subidos
-├── docker-compose.yml       # Configuración Docker
 └── README.md
 ```
 
@@ -120,19 +117,13 @@ docuflota/
 npm run dev          # Inicia frontend y backend
 npm run dev:frontend # Solo frontend
 npm run dev:backend  # Solo backend
-```
-
-### Docker
-```bash
-npm run docker:up    # Iniciar contenedores
-npm run docker:down  # Detener contenedores
-npm run docker:build # Construir e iniciar
-```
-
-### Base de Datos
-```bash
-cd backend
 npm run seed         # Poblar con datos de prueba
+```
+
+### Producción
+```bash
+npm run build        # Construir frontend
+npm run start        # Iniciar backend en producción
 ```
 
 ## 📱 Funcionalidades Implementadas

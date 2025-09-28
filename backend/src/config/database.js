@@ -1,28 +1,31 @@
-import pkg from 'pg'
+import { createClient } from '@supabase/supabase-js'
 import dotenv from 'dotenv'
 
 dotenv.config()
 
-const { Pool } = pkg
+// Supabase configuration
+const supabaseUrl = process.env.SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'docuflota',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'password',
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-})
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Missing Supabase environment variables')
+}
+
+// Create Supabase client
+const supabase = createClient(supabaseUrl, supabaseKey)
 
 // Test database connection
-pool.on('connect', () => {
-  console.log('📦 Connected to PostgreSQL database')
-})
+const testConnection = async () => {
+  try {
+    const { data, error } = await supabase.from('users').select('count').limit(1)
+    if (error) throw error
+    console.log('📦 Connected to Supabase database')
+  } catch (err) {
+    console.error('❌ Database connection error:', err)
+  }
+}
 
-pool.on('error', (err) => {
-  console.error('❌ Database connection error:', err)
-})
+// Test connection on startup
+testConnection()
 
-export default pool
+export default supabase
