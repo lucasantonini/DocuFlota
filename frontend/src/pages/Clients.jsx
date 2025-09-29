@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   Plus, 
   Building2, 
@@ -11,60 +11,61 @@ import {
 } from 'lucide-react'
 
 const Clients = () => {
-  const [clients] = useState([
-    {
-      id: 1,
-      name: 'Supermercado La Anónima S.A.',
-      cuit: '30-12345678-9',
-      contact: 'María Fernández',
-      email: 'maria.fernandez@laanonima.com.ar',
-      phone: '+54 11 1234-5678',
-      status: 'active',
-      vehicles: 5,
-      personnel: 8,
-      documents: {
-        total: 23,
-        valid: 18,
-        expiringSoon: 3,
-        expired: 2
-      }
-    },
-    {
-      id: 2,
-      name: 'Cargill Argentina S.A.',
-      cuit: '30-87654321-0',
-      contact: 'Roberto Silva',
-      email: 'roberto.silva@cargill.com',
-      phone: '+54 11 8765-4321',
-      status: 'active',
-      vehicles: 3,
-      personnel: 6,
-      documents: {
-        total: 18,
-        valid: 15,
-        expiringSoon: 2,
-        expired: 1
-      }
-    },
-    {
-      id: 3,
-      name: 'Molinos Río de la Plata S.A.',
-      cuit: '30-11223344-5',
-      contact: 'Ana Martínez',
-      email: 'ana.martinez@molinos.com.ar',
-      phone: '+54 11 1122-3344',
-      status: 'inactive',
-      vehicles: 2,
-      personnel: 4,
-      documents: {
-        total: 12,
-        valid: 8,
-        expiringSoon: 2,
-        expired: 2
+  const [clients, setClients] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  // Fetch clients from backend
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('/api/clients')
+        const data = await response.json()
+        
+        if (data.success) {
+          setClients(data.data)
+        } else {
+          setError('Error al cargar los clientes')
+        }
+      } catch (err) {
+        setError('Error de conexión')
+        console.error('Error fetching clients:', err)
+      } finally {
+        setLoading(false)
       }
     }
-  ])
 
+    fetchClients()
+  }, [])
+
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando clientes...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="btn-primary"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -99,7 +100,7 @@ const Clients = () => {
         <div className="card">
           <div className="flex items-center gap-4">
             <div className="text-4xl font-bold text-text-primary">
-              {clients.reduce((sum, client) => sum + client.documents.total, 0)}
+              {clients.reduce((sum, client) => sum + client.document_count, 0)}
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-text-secondary">Documentos Requeridos</p>
@@ -113,7 +114,7 @@ const Clients = () => {
         <div className="card">
           <div className="flex items-center gap-4">
             <div className="text-4xl font-bold text-text-primary">
-              {Math.round(clients.reduce((sum, client) => sum + client.documents.total, 0) / clients.length)}
+              {clients.length > 0 ? Math.round(clients.reduce((sum, client) => sum + client.document_count, 0) / clients.length) : 0}
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-text-secondary">Promedio por Cliente</p>
@@ -163,21 +164,21 @@ const Clients = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{client.contact}</div>
-                      <div className="text-sm text-gray-500">{client.email}</div>
-                      <div className="text-sm text-gray-500">{client.phone}</div>
+                      <div className="text-sm font-medium text-gray-900">{client.contact_name}</div>
+                      <div className="text-sm text-gray-500">{client.contact_email}</div>
+                      <div className="text-sm text-gray-500">{client.contact_phone}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {client.vehicles}
+                    {client.vehicle_count}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {client.personnel}
+                    {client.personnel_count}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <div className="text-sm">
-                        <div className="text-lg font-bold text-gray-900">{client.documents.total}</div>
+                        <div className="text-lg font-bold text-gray-900">{client.document_count}</div>
                       </div>
                     </div>
                   </td>

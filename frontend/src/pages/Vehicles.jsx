@@ -13,66 +13,41 @@ import {
 } from 'lucide-react'
 
 const Vehicles = () => {
-  const [vehicles, setVehicles] = useState([
-    {
-      id: 1,
-      plate: 'ABC-123',
-      name: 'Tractor Principal',
-      type: 'Tractor',
-      globalStatus: 'expired',
-      nextExpiration: '2024-01-14',
-      documents: [
-        {
-          id: 1,
-          name: 'SOAT',
-          expirationDate: '2024-01-14',
-          status: 'expired',
-          daysOverdue: 5
-        },
-        {
-          id: 2,
-          name: 'Revisión Técnica',
-          expirationDate: '2024-03-19',
-          status: 'valid',
-          daysRemaining: 45
-        },
-        {
-          id: 3,
-          name: 'Tarjeta de Propiedad',
-          expirationDate: '2024-12-30',
-          status: 'valid',
-          daysRemaining: 320
-        }
-      ]
-    },
-    {
-      id: 2,
-      plate: 'DEF-456',
-      name: 'Semirremolque A',
-      type: 'Semirremolque',
-      globalStatus: 'warning',
-      nextExpiration: '2024-02-09',
-      documents: []
-    },
-    {
-      id: 3,
-      plate: 'GHI-789',
-      name: 'Tractor Secundario',
-      type: 'Tractor',
-      globalStatus: 'valid',
-      nextExpiration: '2024-04-24',
-      documents: []
-    }
-  ])
-
+  const [vehicles, setVehicles] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [expandedRows, setExpandedRows] = useState(new Set())
+
+  // Fetch vehicles from backend
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('/api/vehicles')
+        const data = await response.json()
+        
+        if (data.success) {
+          setVehicles(data.data)
+        } else {
+          setError('Error al cargar los vehículos')
+        }
+      } catch (err) {
+        setError('Error de conexión')
+        console.error('Error fetching vehicles:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchVehicles()
+  }, [])
 
   // Calculate vehicle statistics
   const stats = {
     total: vehicles.length,
-    valid: vehicles.filter(v => v.globalStatus === 'valid').length,
-    warning: vehicles.filter(v => v.globalStatus === 'warning').length,
-    expired: vehicles.filter(v => v.globalStatus === 'expired').length
+    valid: vehicles.filter(v => v.global_status === 'valid').length,
+    warning: vehicles.filter(v => v.global_status === 'warning').length,
+    expired: vehicles.filter(v => v.global_status === 'expired').length
   }
 
   const toggleRow = (vehicleId) => {
@@ -96,12 +71,17 @@ const Vehicles = () => {
   }
 
   const getDocumentStatus = (document) => {
+    const today = new Date()
+    const expirationDate = new Date(document.expiration_date)
+    const diffTime = expirationDate - today
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
     if (document.status === 'expired') {
       return (
         <div className="flex items-center gap-2">
           <span className="status-danger">Vencido</span>
           <span className="text-sm text-gray-500">
-            {document.daysOverdue} días vencido
+            {Math.abs(diffDays)} días vencido
           </span>
         </div>
       )
@@ -110,7 +90,7 @@ const Vehicles = () => {
         <div className="flex items-center gap-2">
           <span className="status-valid">Vigente</span>
           <span className="text-sm text-gray-500">
-            Vence en {document.daysRemaining} días
+            Vence en {diffDays} días
           </span>
         </div>
       )
@@ -125,6 +105,33 @@ const Vehicles = () => {
       month: '2-digit',
       year: 'numeric'
     })
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando vehículos...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="btn-primary"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -246,10 +253,10 @@ const Vehicles = () => {
                       {vehicle.type}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(vehicle.globalStatus)}
+                      {getStatusBadge(vehicle.global_status)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatDate(vehicle.nextExpiration)}
+                      {vehicle.next_expiration ? formatDate(vehicle.next_expiration) : 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-2">
@@ -268,7 +275,7 @@ const Vehicles = () => {
                   </tr>
                   
                   {/* Expanded Documents Row */}
-                  {expandedRows.has(vehicle.id) && vehicle.documents.length > 0 && (
+                  {expandedRows.has(vehicle.id) && vehicle.documents && vehicle.documents.length > 0 && (
                     <tr>
                       <td colSpan="6" className="px-6 py-4 bg-gray-50">
                         <div className="ml-8">
@@ -285,7 +292,7 @@ const Vehicles = () => {
                                       {document.name}
                                     </div>
                                     <div className="text-sm text-gray-500">
-                                      Vence: {formatDate(document.expirationDate)}
+                                      Vence: {formatDate(document.expiration_date)}
                                     </div>
                                   </div>
                                 </div>
