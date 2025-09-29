@@ -18,34 +18,87 @@ import UpcomingExpirationsChart from '../components/charts/UpcomingExpirationsCh
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
-    totalDocuments: 47,
-    vehicles: 12,
-    personnel: 25,
-    validDocuments: 36,
-    expiringSoon: 8,
-    expired: 3
+    totalDocuments: 0,
+    vehicles: 0,
+    personnel: 0,
+    validDocuments: 0,
+    expiringSoon: 0,
+    expired: 0
   })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [recentActivity, setRecentActivity] = useState([])
 
   const { showNotifications, closeNotifications } = useNotifications()
 
-  // Sample notifications for expiring documents
-  const notifications = [
-    {
-      vehicle: 'ABC-123 - Tractor Principal',
-      document: 'SOAT',
-      daysLeft: 15
-    },
-    {
-      vehicle: 'DEF-456 - Semirremolque A',
-      document: 'Revisión Técnica',
-      daysLeft: 8
-    },
-    {
-      vehicle: 'GHI-789 - Tractor Secundario',
-      document: 'Seguro',
-      daysLeft: 12
+  // Fetch dashboard data from backend
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true)
+        
+        // Fetch stats
+        const statsResponse = await fetch('/api/dashboard/stats')
+        const statsData = await statsResponse.json()
+        
+        if (statsData.success) {
+          setStats(statsData.data)
+        }
+
+        // Fetch recent activity
+        const activityResponse = await fetch('/api/dashboard/activity')
+        const activityData = await activityResponse.json()
+        
+        if (activityData.success) {
+          setRecentActivity(activityData.data)
+        }
+      } catch (err) {
+        setError('Error de conexión')
+        console.error('Error fetching dashboard data:', err)
+      } finally {
+        setLoading(false)
+      }
     }
-  ]
+
+    fetchDashboardData()
+  }, [])
+
+  // Generate notifications from recent activity
+  const notifications = recentActivity
+    .filter(activity => activity.status === 'warning' || activity.status === 'expired')
+    .slice(0, 3)
+    .map(activity => ({
+      vehicle: activity.vehicle_plate ? `${activity.vehicle_plate} - ${activity.vehicle_name}` : activity.personnel_name,
+      document: activity.name,
+      daysLeft: activity.status === 'expired' ? 0 : Math.ceil((new Date(activity.expiration_date) - new Date()) / (1000 * 60 * 60 * 24))
+    }))
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="btn-primary"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   // Data for document distribution chart
   const documentDistributionData = [

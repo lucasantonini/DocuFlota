@@ -14,74 +14,41 @@ import {
 import UploadModal from '../components/UploadModal'
 
 const Personnel = () => {
-  const [personnel, setPersonnel] = useState([
-    {
-      id: 1,
-      name: 'Juan Carlos Pérez',
-      status: 'valid',
-      nextExpiration: '2024-06-15',
-      documents: []
-    },
-    {
-      id: 2,
-      name: 'María Elena González',
-      status: 'warning',
-      nextExpiration: '2024-02-20',
-      documents: []
-    },
-    {
-      id: 3,
-      name: 'Roberto Martínez',
-      status: 'expired',
-      nextExpiration: '2024-03-15', // Registro de Conducir (más próximo vencido)
-      documents: [
-        {
-          id: 1,
-          name: 'DNI',
-          expirationDate: '2024-04-20',
-          status: 'expired',
-          daysOverdue: 5
-        },
-        {
-          id: 2,
-          name: 'Certificado de Antecedentes',
-          expirationDate: '2024-09-30',
-          status: 'valid',
-          daysRemaining: 155
-        },
-        {
-          id: 3,
-          name: 'Registro de Conducir',
-          expirationDate: '2024-03-15',
-          status: 'expired',
-          daysOverdue: 20
-        },
-        {
-          id: 4,
-          name: 'Seguro ART',
-          expirationDate: '2024-05-10',
-          status: 'warning',
-          daysRemaining: 25
-        },
-        {
-          id: 5,
-          name: 'Certificado de Carga Peligrosa',
-          expirationDate: '2024-12-31',
-          status: 'valid',
-          daysRemaining: 280
-        }
-      ]
-    }
-  ])
-
-  const [expandedRows, setExpandedRows] = useState(new Set()) // No rows expanded by default
+  const [personnel, setPersonnel] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [expandedRows, setExpandedRows] = useState(new Set())
   const [uploadModal, setUploadModal] = useState({ isOpen: false, personnelId: null, personnelName: '' })
+
+  // Fetch personnel from backend
+  useEffect(() => {
+    const fetchPersonnel = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('/api/personnel')
+        const data = await response.json()
+        
+        if (data.success) {
+          setPersonnel(data.data)
+        } else {
+          setError('Error al cargar el personal')
+        }
+      } catch (err) {
+        setError('Error de conexión')
+        console.error('Error fetching personnel:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPersonnel()
+  }, [])
 
   const stats = {
     total: personnel.length,
-    valid: personnel.filter(p => p.status === 'valid').length,
-    expiringSoon: personnel.filter(p => p.status === 'warning').length,
-    expired: personnel.filter(p => p.status === 'expired').length
+    valid: personnel.filter(p => p.global_status === 'valid').length,
+    expiringSoon: personnel.filter(p => p.global_status === 'warning').length,
+    expired: personnel.filter(p => p.global_status === 'expired').length
   }
 
   const toggleRow = (personnelId) => {
@@ -127,12 +94,17 @@ const Personnel = () => {
   }
 
   const getDocumentStatus = (document) => {
+    const today = new Date()
+    const expirationDate = new Date(document.expiration_date)
+    const diffTime = expirationDate - today
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
     if (document.status === 'expired') {
       return (
         <div className="flex items-center gap-2">
           <span className="status-danger">Vencido</span>
           <span className="text-sm text-gray-500">
-            {document.daysOverdue} días vencido
+            {Math.abs(diffDays)} días vencido
           </span>
         </div>
       )
@@ -141,7 +113,7 @@ const Personnel = () => {
         <div className="flex items-center gap-2">
           <span className="status-valid">Vigente</span>
           <span className="text-sm text-gray-500">
-            {document.daysRemaining} días restantes
+            {diffDays} días restantes
           </span>
         </div>
       )
@@ -150,7 +122,7 @@ const Personnel = () => {
         <div className="flex items-center gap-2">
           <span className="status-warning">Por vencer</span>
           <span className="text-sm text-gray-500">
-            {document.daysRemaining} días restantes
+            {diffDays} días restantes
           </span>
         </div>
       )
@@ -165,6 +137,33 @@ const Personnel = () => {
       month: '2-digit',
       year: 'numeric'
     })
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando personal...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="btn-primary"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -276,10 +275,10 @@ const Personnel = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(person.status)}
+                      {getStatusBadge(person.global_status)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatDate(person.nextExpiration)}
+                      {person.next_expiration ? formatDate(person.next_expiration) : 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-2">
@@ -301,7 +300,7 @@ const Personnel = () => {
                   </tr>
                   
                   {/* Expanded Documents Row */}
-                  {expandedRows.has(person.id) && person.documents.length > 0 && (
+                  {expandedRows.has(person.id) && person.documents && person.documents.length > 0 && (
                     <tr>
                       <td colSpan="5" className="px-6 py-4 bg-gray-50">
                         <div className="ml-8">
@@ -318,7 +317,7 @@ const Personnel = () => {
                                       {document.name}
                                     </div>
                                     <div className="text-sm text-gray-500">
-                                      Vence: {formatDate(document.expirationDate)}
+                                      Vence: {formatDate(document.expiration_date)}
                                     </div>
                                   </div>
                                 </div>
