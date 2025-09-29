@@ -1,7 +1,7 @@
 import express from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import pool from '../config/database.js'
+import supabase from '../config/database.js'
 
 const router = express.Router()
 
@@ -11,8 +11,13 @@ router.post('/register', async (req, res) => {
     const { email, password, name } = req.body
 
     // Check if user already exists
-    const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email])
-    if (existingUser.rows.length > 0) {
+    const { data: existingUser, error: checkError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single()
+    
+    if (existingUser) {
       return res.status(400).json({
         success: false,
         message: 'User already exists'
@@ -24,13 +29,17 @@ router.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds)
 
     // Create user
-    const result = await pool.query(`
-      INSERT INTO users (email, password, name)
-      VALUES ($1, $2, $3)
-      RETURNING id, email, name, role, created_at
-    `, [email, hashedPassword, name])
+    const { data: user, error: createError } = await supabase
+      .from('users')
+      .insert([{
+        email,
+        password: hashedPassword,
+        name
+      }])
+      .select('id, email, name, role, created_at')
+      .single()
 
-    const user = result.rows[0]
+    if (createError) throw createError
 
     // Generate JWT token
     const token = jwt.sign(
@@ -61,15 +70,18 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body
 
     // Find user
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email])
-    if (result.rows.length === 0) {
+    const { data: user, error: findError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single()
+
+    if (findError || !user) {
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
       })
     }
-
-    const user = result.rows[0]
 
     // Check password
     const isValidPassword = await bcrypt.compare(password, user.password)
@@ -123,12 +135,13 @@ router.get('/me', async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret')
     
-    const result = await pool.query(
-      'SELECT id, email, name, role, created_at FROM users WHERE id = $1',
-      [decoded.userId]
-    )
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id, email, name, role, created_at')
+      .eq('id', decoded.userId)
+      .single()
 
-    if (result.rows.length === 0) {
+    if (userError || !user) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
@@ -137,7 +150,7 @@ router.get('/me', async (req, res) => {
 
     res.json({
       success: true,
-      data: result.rows[0]
+      data: user
     })
   } catch (error) {
     console.error('Get user error:', error)

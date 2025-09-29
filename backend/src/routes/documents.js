@@ -2,7 +2,7 @@ import express from 'express'
 import multer from 'multer'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import pool from '../config/database.js'
+import supabase from '../config/database.js'
 import { updateDocumentStatus } from '../models/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -44,55 +44,49 @@ router.get('/', async (req, res) => {
   try {
     const { category, status, vehicle_id, personnel_id } = req.query
 
-    let query = `
-      SELECT 
-        d.*,
-        dt.name as type_name,
-        v.plate as vehicle_plate,
-        v.name as vehicle_name,
-        p.name as personnel_name,
-        c.name as client_name
-      FROM documents d
-      LEFT JOIN document_types dt ON d.type_id = dt.id
-      LEFT JOIN vehicles v ON d.vehicle_id = v.id
-      LEFT JOIN personnel p ON d.personnel_id = p.id
-      LEFT JOIN clients c ON d.client_id = c.id
-      WHERE 1=1
-    `
-    const params = []
-    let paramCount = 0
+    let query = supabase
+      .from('documents')
+      .select(`
+        *,
+        document_types(name),
+        vehicles(plate, name),
+        personnel(name),
+        clients(name)
+      `)
+      .order('expiration_date', { ascending: true })
 
     if (category) {
-      paramCount++
-      query += ` AND d.category = $${paramCount}`
-      params.push(category)
+      query = query.eq('category', category)
     }
 
     if (status) {
-      paramCount++
-      query += ` AND d.status = $${paramCount}`
-      params.push(status)
+      query = query.eq('status', status)
     }
 
     if (vehicle_id) {
-      paramCount++
-      query += ` AND d.vehicle_id = $${paramCount}`
-      params.push(vehicle_id)
+      query = query.eq('vehicle_id', vehicle_id)
     }
 
     if (personnel_id) {
-      paramCount++
-      query += ` AND d.personnel_id = $${paramCount}`
-      params.push(personnel_id)
+      query = query.eq('personnel_id', personnel_id)
     }
 
-    query += ' ORDER BY d.expiration_date ASC'
+    const { data: documents, error: documentsError } = await query
 
-    const result = await pool.query(query, params)
+    if (documentsError) throw documentsError
+
+    const formattedDocuments = documents.map(doc => ({
+      ...doc,
+      type_name: doc.document_types?.name,
+      vehicle_plate: doc.vehicles?.plate,
+      vehicle_name: doc.vehicles?.name,
+      personnel_name: doc.personnel?.name,
+      client_name: doc.clients?.name
+    }))
 
     res.json({
       success: true,
-      data: result.rows
+      data: formattedDocuments
     })
   } catch (error) {
     console.error('Documents fetch error:', error)
@@ -117,32 +111,31 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
     const fileUrl = `/uploads/${req.file.filename}`
 
-    const result = await pool.query(`
-      INSERT INTO documents (
-        name, type_id, category, file_url, file_name, file_size, 
-        expiration_date, vehicle_id, personnel_id, client_id
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      RETURNING *
-    `, [
-      name,
-      type_id,
-      category,
-      fileUrl,
-      req.file.originalname,
-      req.file.size,
-      expiration_date,
-      vehicle_id || null,
-      personnel_id || null,
-      client_id
-    ])
+    const { data: document, error: createError } = await supabase
+      .from('documents')
+      .insert([{
+        name,
+        type_id,
+        category,
+        file_url: fileUrl,
+        file_name: req.file.originalname,
+        file_size: req.file.size,
+        expiration_date,
+        vehicle_id: vehicle_id || null,
+        personnel_id: personnel_id || null,
+        client_id
+      }])
+      .select()
+      .single()
+
+    if (createError) throw createError
 
     // Update document statuses
     await updateDocumentStatus()
 
     res.status(201).json({
       success: true,
-      data: result.rows[0]
+      data: document
     })
   } catch (error) {
     console.error('Document upload error:', error)
@@ -159,14 +152,19 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params
     const { name, expiration_date, status } = req.body
 
-    const result = await pool.query(`
-      UPDATE documents 
-      SET name = $1, expiration_date = $2, status = $3, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $4
-      RETURNING *
-    `, [name, expiration_date, status, id])
+    const { data: document, error: updateError } = await supabase
+      .from('documents')
+      .update({
+        name,
+        expiration_date,
+        status,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single()
 
-    if (result.rows.length === 0) {
+    if (updateError || !document) {
       return res.status(404).json({
         success: false,
         message: 'Document not found'
@@ -175,7 +173,7 @@ router.put('/:id', async (req, res) => {
 
     res.json({
       success: true,
-      data: result.rows[0]
+      data: document
     })
   } catch (error) {
     console.error('Document update error:', error)
@@ -191,9 +189,14 @@ router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params
 
-    const result = await pool.query('DELETE FROM documents WHERE id = $1 RETURNING *', [id])
+    const { data: document, error: deleteError } = await supabase
+      .from('documents')
+      .delete()
+      .eq('id', id)
+      .select()
+      .single()
 
-    if (result.rows.length === 0) {
+    if (deleteError || !document) {
       return res.status(404).json({
         success: false,
         message: 'Document not found'
@@ -218,21 +221,22 @@ router.get('/types', async (req, res) => {
   try {
     const { category } = req.query
 
-    let query = 'SELECT * FROM document_types'
-    const params = []
+    let query = supabase
+      .from('document_types')
+      .select('*')
+      .order('name', { ascending: true })
 
     if (category) {
-      query += ' WHERE category = $1'
-      params.push(category)
+      query = query.eq('category', category)
     }
 
-    query += ' ORDER BY name'
+    const { data: documentTypes, error: typesError } = await query
 
-    const result = await pool.query(query, params)
+    if (typesError) throw typesError
 
     res.json({
       success: true,
-      data: result.rows
+      data: documentTypes
     })
   } catch (error) {
     console.error('Document types fetch error:', error)

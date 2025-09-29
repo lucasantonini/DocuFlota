@@ -1,49 +1,55 @@
 import express from 'express'
-import pool from '../config/database.js'
+import supabase from '../config/database.js'
 
 const router = express.Router()
 
 // Get all vehicles with their documents
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT 
-        v.*,
-        c.name as client_name,
-        COUNT(d.id) as document_count,
-        MIN(d.expiration_date) as next_expiration
-      FROM vehicles v
-      LEFT JOIN clients c ON v.client_id = c.id
-      LEFT JOIN documents d ON v.id = d.vehicle_id AND d.category = 'vehicle'
-      GROUP BY v.id, c.name
-      ORDER BY v.created_at DESC
-    `)
+    // Get vehicles with client info
+    const { data: vehiclesData, error: vehiclesError } = await supabase
+      .from('vehicles')
+      .select(`
+        *,
+        clients!inner(name)
+      `)
+      .order('created_at', { ascending: false })
+
+    if (vehiclesError) throw vehiclesError
 
     // Get documents for each vehicle
     const vehicles = await Promise.all(
-      result.rows.map(async (vehicle) => {
-        const documents = await pool.query(`
-          SELECT 
-            d.*,
-            dt.name as type_name
-          FROM documents d
-          LEFT JOIN document_types dt ON d.type_id = dt.id
-          WHERE d.vehicle_id = $1 AND d.category = 'vehicle'
-          ORDER BY d.expiration_date ASC
-        `, [vehicle.id])
+      vehiclesData.map(async (vehicle) => {
+        const { data: documents, error: docsError } = await supabase
+          .from('documents')
+          .select(`
+            *,
+            document_types(name)
+          `)
+          .eq('vehicle_id', vehicle.id)
+          .eq('category', 'vehicle')
+          .order('expiration_date', { ascending: true })
+
+        if (docsError) throw docsError
 
         // Calculate global status
         let globalStatus = 'valid'
-        if (documents.rows.some(doc => doc.status === 'expired')) {
+        if (documents.some(doc => doc.status === 'expired')) {
           globalStatus = 'expired'
-        } else if (documents.rows.some(doc => doc.status === 'warning')) {
+        } else if (documents.some(doc => doc.status === 'warning')) {
           globalStatus = 'warning'
         }
 
         return {
           ...vehicle,
+          client_name: vehicle.clients.name,
+          document_count: documents.length,
+          next_expiration: documents.length > 0 ? documents[0].expiration_date : null,
           global_status: globalStatus,
-          documents: documents.rows
+          documents: documents.map(doc => ({
+            ...doc,
+            type_name: doc.document_types?.name
+          }))
         }
       })
     )
@@ -66,37 +72,43 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params
 
-    const vehicle = await pool.query(`
-      SELECT 
-        v.*,
-        c.name as client_name
-      FROM vehicles v
-      LEFT JOIN clients c ON v.client_id = c.id
-      WHERE v.id = $1
-    `, [id])
+    const { data: vehicle, error: vehicleError } = await supabase
+      .from('vehicles')
+      .select(`
+        *,
+        clients(name)
+      `)
+      .eq('id', id)
+      .single()
 
-    if (vehicle.rows.length === 0) {
+    if (vehicleError || !vehicle) {
       return res.status(404).json({
         success: false,
         message: 'Vehicle not found'
       })
     }
 
-    const documents = await pool.query(`
-      SELECT 
-        d.*,
-        dt.name as type_name
-      FROM documents d
-      LEFT JOIN document_types dt ON d.type_id = dt.id
-      WHERE d.vehicle_id = $1 AND d.category = 'vehicle'
-      ORDER BY d.expiration_date ASC
-    `, [id])
+    const { data: documents, error: docsError } = await supabase
+      .from('documents')
+      .select(`
+        *,
+        document_types(name)
+      `)
+      .eq('vehicle_id', id)
+      .eq('category', 'vehicle')
+      .order('expiration_date', { ascending: true })
+
+    if (docsError) throw docsError
 
     res.json({
       success: true,
       data: {
-        ...vehicle.rows[0],
-        documents: documents.rows
+        ...vehicle,
+        client_name: vehicle.clients.name,
+        documents: documents.map(doc => ({
+          ...doc,
+          type_name: doc.document_types?.name
+        }))
       }
     })
   } catch (error) {
@@ -113,24 +125,33 @@ router.post('/', async (req, res) => {
   try {
     const { plate, name, type, client_id } = req.body
 
-    const result = await pool.query(`
-      INSERT INTO vehicles (plate, name, type, client_id)
-      VALUES ($1, $2, $3, $4)
-      RETURNING *
-    `, [plate, name, type, client_id])
+    const { data: vehicle, error: createError } = await supabase
+      .from('vehicles')
+      .insert([{
+        plate,
+        name,
+        type,
+        client_id
+      }])
+      .select()
+      .single()
+
+    if (createError) {
+      if (createError.code === '23505') {
+        return res.status(400).json({
+          success: false,
+          message: 'Vehicle with this plate already exists'
+        })
+      }
+      throw createError
+    }
 
     res.status(201).json({
       success: true,
-      data: result.rows[0]
+      data: vehicle
     })
   } catch (error) {
     console.error('Vehicle creation error:', error)
-    if (error.code === '23505') {
-      return res.status(400).json({
-        success: false,
-        message: 'Vehicle with this plate already exists'
-      })
-    }
     res.status(500).json({
       success: false,
       message: 'Error creating vehicle'
@@ -144,14 +165,21 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params
     const { plate, name, type, client_id, status } = req.body
 
-    const result = await pool.query(`
-      UPDATE vehicles 
-      SET plate = $1, name = $2, type = $3, client_id = $4, status = $5, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $6
-      RETURNING *
-    `, [plate, name, type, client_id, status, id])
+    const { data: vehicle, error: updateError } = await supabase
+      .from('vehicles')
+      .update({
+        plate,
+        name,
+        type,
+        client_id,
+        status,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single()
 
-    if (result.rows.length === 0) {
+    if (updateError || !vehicle) {
       return res.status(404).json({
         success: false,
         message: 'Vehicle not found'
@@ -160,7 +188,7 @@ router.put('/:id', async (req, res) => {
 
     res.json({
       success: true,
-      data: result.rows[0]
+      data: vehicle
     })
   } catch (error) {
     console.error('Vehicle update error:', error)
@@ -176,9 +204,14 @@ router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params
 
-    const result = await pool.query('DELETE FROM vehicles WHERE id = $1 RETURNING *', [id])
+    const { data: vehicle, error: deleteError } = await supabase
+      .from('vehicles')
+      .delete()
+      .eq('id', id)
+      .select()
+      .single()
 
-    if (result.rows.length === 0) {
+    if (deleteError || !vehicle) {
       return res.status(404).json({
         success: false,
         message: 'Vehicle not found'

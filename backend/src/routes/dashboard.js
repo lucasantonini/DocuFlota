@@ -1,5 +1,5 @@
 import express from 'express'
-import pool from '../config/database.js'
+import supabase from '../config/database.js'
 
 const router = express.Router()
 
@@ -8,28 +8,28 @@ router.get('/stats', async (req, res) => {
   try {
     // Get total counts
     const [
-      totalDocuments,
-      totalVehicles,
-      totalPersonnel,
-      validDocuments,
-      expiringSoon,
-      expired
+      { count: totalDocuments },
+      { count: totalVehicles },
+      { count: totalPersonnel },
+      { count: validDocuments },
+      { count: expiringSoon },
+      { count: expired }
     ] = await Promise.all([
-      pool.query('SELECT COUNT(*) FROM documents'),
-      pool.query('SELECT COUNT(*) FROM vehicles'),
-      pool.query('SELECT COUNT(*) FROM personnel'),
-      pool.query("SELECT COUNT(*) FROM documents WHERE status = 'valid'"),
-      pool.query("SELECT COUNT(*) FROM documents WHERE status = 'warning'"),
-      pool.query("SELECT COUNT(*) FROM documents WHERE status = 'expired'")
+      supabase.from('documents').select('*', { count: 'exact', head: true }),
+      supabase.from('vehicles').select('*', { count: 'exact', head: true }),
+      supabase.from('personnel').select('*', { count: 'exact', head: true }),
+      supabase.from('documents').select('*', { count: 'exact', head: true }).eq('status', 'valid'),
+      supabase.from('documents').select('*', { count: 'exact', head: true }).eq('status', 'warning'),
+      supabase.from('documents').select('*', { count: 'exact', head: true }).eq('status', 'expired')
     ])
 
     const stats = {
-      totalDocuments: parseInt(totalDocuments.rows[0].count),
-      vehicles: parseInt(totalVehicles.rows[0].count),
-      personnel: parseInt(totalPersonnel.rows[0].count),
-      validDocuments: parseInt(validDocuments.rows[0].count),
-      expiringSoon: parseInt(expiringSoon.rows[0].count),
-      expired: parseInt(expired.rows[0].count)
+      totalDocuments: totalDocuments || 0,
+      vehicles: totalVehicles || 0,
+      personnel: totalPersonnel || 0,
+      validDocuments: validDocuments || 0,
+      expiringSoon: expiringSoon || 0,
+      expired: expired || 0
     }
 
     res.json({
@@ -48,27 +48,37 @@ router.get('/stats', async (req, res) => {
 // Get recent activity
 router.get('/activity', async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT 
-        d.id,
-        d.name,
-        d.category,
-        d.status,
-        d.created_at,
-        v.plate as vehicle_plate,
-        p.name as personnel_name,
-        c.name as client_name
-      FROM documents d
-      LEFT JOIN vehicles v ON d.vehicle_id = v.id
-      LEFT JOIN personnel p ON d.personnel_id = p.id
-      LEFT JOIN clients c ON d.client_id = c.id
-      ORDER BY d.created_at DESC
-      LIMIT 10
-    `)
+    const { data: documents, error: documentsError } = await supabase
+      .from('documents')
+      .select(`
+        id,
+        name,
+        category,
+        status,
+        created_at,
+        vehicles(plate),
+        personnel(name),
+        clients(name)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(10)
+
+    if (documentsError) throw documentsError
+
+    const formattedActivity = documents.map(doc => ({
+      id: doc.id,
+      name: doc.name,
+      category: doc.category,
+      status: doc.status,
+      created_at: doc.created_at,
+      vehicle_plate: doc.vehicles?.plate,
+      personnel_name: doc.personnel?.name,
+      client_name: doc.clients?.name
+    }))
 
     res.json({
       success: true,
-      data: result.rows
+      data: formattedActivity
     })
   } catch (error) {
     console.error('Dashboard activity error:', error)

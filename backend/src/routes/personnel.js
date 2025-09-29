@@ -1,49 +1,55 @@
 import express from 'express'
-import pool from '../config/database.js'
+import supabase from '../config/database.js'
 
 const router = express.Router()
 
 // Get all personnel with their documents
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT 
-        p.*,
-        c.name as client_name,
-        COUNT(d.id) as document_count,
-        MIN(d.expiration_date) as next_expiration
-      FROM personnel p
-      LEFT JOIN clients c ON p.client_id = c.id
-      LEFT JOIN documents d ON p.id = d.personnel_id AND d.category = 'personnel'
-      GROUP BY p.id, c.name
-      ORDER BY p.created_at DESC
-    `)
+    // Get personnel with client info
+    const { data: personnelData, error: personnelError } = await supabase
+      .from('personnel')
+      .select(`
+        *,
+        clients!inner(name)
+      `)
+      .order('created_at', { ascending: false })
+
+    if (personnelError) throw personnelError
 
     // Get documents for each personnel
     const personnel = await Promise.all(
-      result.rows.map(async (person) => {
-        const documents = await pool.query(`
-          SELECT 
-            d.*,
-            dt.name as type_name
-          FROM documents d
-          LEFT JOIN document_types dt ON d.type_id = dt.id
-          WHERE d.personnel_id = $1 AND d.category = 'personnel'
-          ORDER BY d.expiration_date ASC
-        `, [person.id])
+      personnelData.map(async (person) => {
+        const { data: documents, error: docsError } = await supabase
+          .from('documents')
+          .select(`
+            *,
+            document_types(name)
+          `)
+          .eq('personnel_id', person.id)
+          .eq('category', 'personnel')
+          .order('expiration_date', { ascending: true })
+
+        if (docsError) throw docsError
 
         // Calculate global status
         let globalStatus = 'valid'
-        if (documents.rows.some(doc => doc.status === 'expired')) {
+        if (documents.some(doc => doc.status === 'expired')) {
           globalStatus = 'expired'
-        } else if (documents.rows.some(doc => doc.status === 'warning')) {
+        } else if (documents.some(doc => doc.status === 'warning')) {
           globalStatus = 'warning'
         }
 
         return {
           ...person,
+          client_name: person.clients.name,
+          document_count: documents.length,
+          next_expiration: documents.length > 0 ? documents[0].expiration_date : null,
           global_status: globalStatus,
-          documents: documents.rows
+          documents: documents.map(doc => ({
+            ...doc,
+            type_name: doc.document_types?.name
+          }))
         }
       })
     )
@@ -66,37 +72,43 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params
 
-    const person = await pool.query(`
-      SELECT 
-        p.*,
-        c.name as client_name
-      FROM personnel p
-      LEFT JOIN clients c ON p.client_id = c.id
-      WHERE p.id = $1
-    `, [id])
+    const { data: person, error: personError } = await supabase
+      .from('personnel')
+      .select(`
+        *,
+        clients(name)
+      `)
+      .eq('id', id)
+      .single()
 
-    if (person.rows.length === 0) {
+    if (personError || !person) {
       return res.status(404).json({
         success: false,
         message: 'Personnel not found'
       })
     }
 
-    const documents = await pool.query(`
-      SELECT 
-        d.*,
-        dt.name as type_name
-      FROM documents d
-      LEFT JOIN document_types dt ON d.type_id = dt.id
-      WHERE d.personnel_id = $1 AND d.category = 'personnel'
-      ORDER BY d.expiration_date ASC
-    `, [id])
+    const { data: documents, error: docsError } = await supabase
+      .from('documents')
+      .select(`
+        *,
+        document_types(name)
+      `)
+      .eq('personnel_id', id)
+      .eq('category', 'personnel')
+      .order('expiration_date', { ascending: true })
+
+    if (docsError) throw docsError
 
     res.json({
       success: true,
       data: {
-        ...person.rows[0],
-        documents: documents.rows
+        ...person,
+        client_name: person.clients.name,
+        documents: documents.map(doc => ({
+          ...doc,
+          type_name: doc.document_types?.name
+        }))
       }
     })
   } catch (error) {
@@ -113,24 +125,33 @@ router.post('/', async (req, res) => {
   try {
     const { name, role, dni, client_id } = req.body
 
-    const result = await pool.query(`
-      INSERT INTO personnel (name, role, dni, client_id)
-      VALUES ($1, $2, $3, $4)
-      RETURNING *
-    `, [name, role, dni, client_id])
+    const { data: person, error: createError } = await supabase
+      .from('personnel')
+      .insert([{
+        name,
+        role,
+        dni,
+        client_id
+      }])
+      .select()
+      .single()
+
+    if (createError) {
+      if (createError.code === '23505') {
+        return res.status(400).json({
+          success: false,
+          message: 'Personnel with this DNI already exists'
+        })
+      }
+      throw createError
+    }
 
     res.status(201).json({
       success: true,
-      data: result.rows[0]
+      data: person
     })
   } catch (error) {
     console.error('Personnel creation error:', error)
-    if (error.code === '23505') {
-      return res.status(400).json({
-        success: false,
-        message: 'Personnel with this DNI already exists'
-      })
-    }
     res.status(500).json({
       success: false,
       message: 'Error creating personnel'
@@ -144,14 +165,21 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params
     const { name, role, dni, client_id, status } = req.body
 
-    const result = await pool.query(`
-      UPDATE personnel 
-      SET name = $1, role = $2, dni = $3, client_id = $4, status = $5, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $6
-      RETURNING *
-    `, [name, role, dni, client_id, status, id])
+    const { data: person, error: updateError } = await supabase
+      .from('personnel')
+      .update({
+        name,
+        role,
+        dni,
+        client_id,
+        status,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single()
 
-    if (result.rows.length === 0) {
+    if (updateError || !person) {
       return res.status(404).json({
         success: false,
         message: 'Personnel not found'
@@ -160,7 +188,7 @@ router.put('/:id', async (req, res) => {
 
     res.json({
       success: true,
-      data: result.rows[0]
+      data: person
     })
   } catch (error) {
     console.error('Personnel update error:', error)
@@ -176,9 +204,14 @@ router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params
 
-    const result = await pool.query('DELETE FROM personnel WHERE id = $1 RETURNING *', [id])
+    const { data: person, error: deleteError } = await supabase
+      .from('personnel')
+      .delete()
+      .eq('id', id)
+      .select()
+      .single()
 
-    if (result.rows.length === 0) {
+    if (deleteError || !person) {
       return res.status(404).json({
         success: false,
         message: 'Personnel not found'
