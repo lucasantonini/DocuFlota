@@ -85,6 +85,18 @@ CREATE TABLE IF NOT EXISTS documents (
   )
 );
 
+-- Document history table for tracking document replacements
+CREATE TABLE IF NOT EXISTS document_history (
+  id BIGSERIAL PRIMARY KEY,
+  document_id BIGINT REFERENCES documents(id) ON DELETE CASCADE,
+  previous_file_url VARCHAR(500),
+  previous_file_name VARCHAR(255),
+  previous_expiration_date DATE,
+  replaced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  replaced_by BIGINT REFERENCES users(id),
+  reason VARCHAR(255) DEFAULT 'replacement'
+);
+
 -- Notifications table
 CREATE TABLE IF NOT EXISTS notifications (
   id BIGSERIAL PRIMARY KEY,
@@ -102,6 +114,8 @@ CREATE INDEX IF NOT EXISTS idx_documents_expiration ON documents(expiration_date
 CREATE INDEX IF NOT EXISTS idx_documents_status ON documents(status);
 CREATE INDEX IF NOT EXISTS idx_documents_vehicle ON documents(vehicle_id);
 CREATE INDEX IF NOT EXISTS idx_documents_personnel ON documents(personnel_id);
+CREATE INDEX IF NOT EXISTS idx_document_history_document ON document_history(document_id);
+CREATE INDEX IF NOT EXISTS idx_document_history_replaced_at ON document_history(replaced_at);
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read_at);
 
@@ -127,6 +141,7 @@ ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE vehicles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE personnel ENABLE ROW LEVEL SECURITY;
 ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE document_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
 -- Create policies (allow all for now - you can restrict later)
@@ -135,4 +150,25 @@ CREATE POLICY "Enable all for clients" ON clients FOR ALL USING (true);
 CREATE POLICY "Enable all for vehicles" ON vehicles FOR ALL USING (true);
 CREATE POLICY "Enable all for personnel" ON personnel FOR ALL USING (true);
 CREATE POLICY "Enable all for documents" ON documents FOR ALL USING (true);
+CREATE POLICY "Enable all for document_history" ON document_history FOR ALL USING (true);
 CREATE POLICY "Enable all for notifications" ON notifications FOR ALL USING (true);
+
+-- Insert default document types
+INSERT INTO document_types (name, category, required, validity_days) VALUES
+-- Vehicle document types
+('Seguro', 'vehicle', true, 365),
+('VTV', 'vehicle', true, 365),
+('Cédula Verde', 'vehicle', true, 365),
+('Cédula Azul', 'vehicle', true, 365),
+('Patente', 'vehicle', true, 365),
+('RTO', 'vehicle', true, 365),
+('Habilitación Municipal', 'vehicle', true, 365),
+('Otro', 'vehicle', false, NULL),
+-- Personnel document types
+('Licencia de Conducir', 'personnel', true, 365),
+('DNI', 'personnel', true, 365),
+('Certificado Médico', 'personnel', true, 365),
+('Curso de Capacitación', 'personnel', true, 365),
+('Seguro de Vida', 'personnel', false, 365),
+('Otro', 'personnel', false, NULL)
+ON CONFLICT DO NOTHING;

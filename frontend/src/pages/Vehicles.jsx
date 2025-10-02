@@ -11,34 +11,21 @@ import {
   Clock,
   AlertTriangle
 } from 'lucide-react'
+import UploadModal from '../components/UploadModal'
+import ReplaceDocumentModal from '../components/ReplaceDocumentModal'
+import DocumentHistoryModal from '../components/DocumentHistoryModal'
 
 const Vehicles = () => {
   const [vehicles, setVehicles] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [expandedRows, setExpandedRows] = useState(new Set())
+  const [uploadModal, setUploadModal] = useState({ isOpen: false, vehicleId: null, vehicleName: '', clientId: null })
+  const [replaceModal, setReplaceModal] = useState({ isOpen: false, document: null, vehicleName: '' })
+  const [historyModal, setHistoryModal] = useState({ isOpen: false, document: null, vehicleName: '' })
 
   // Fetch vehicles from backend
   useEffect(() => {
-    const fetchVehicles = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch('/api/vehicles')
-        const data = await response.json()
-        
-        if (data.success) {
-          setVehicles(data.data)
-        } else {
-          setError('Error al cargar los vehículos')
-        }
-      } catch (err) {
-        setError('Error de conexión')
-        console.error('Error fetching vehicles:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchVehicles()
   }, [])
 
@@ -58,6 +45,87 @@ const Vehicles = () => {
       newExpanded.add(vehicleId)
     }
     setExpandedRows(newExpanded)
+  }
+
+  const handleUploadClick = (vehicleId, vehicleName, clientId) => {
+    setUploadModal({
+      isOpen: true,
+      vehicleId,
+      vehicleName,
+      clientId
+    })
+  }
+
+  const handleUploadClose = () => {
+    setUploadModal({
+      isOpen: false,
+      vehicleId: null,
+      vehicleName: '',
+      clientId: null
+    })
+  }
+
+  const handleUploadSuccess = (uploadedDocuments) => {
+    // Refresh vehicles data to show new documents
+    fetchVehicles()
+    handleUploadClose()
+  }
+
+  const handleReplaceClick = (document, vehicleName) => {
+    setReplaceModal({
+      isOpen: true,
+      document,
+      vehicleName
+    })
+  }
+
+  const handleReplaceClose = () => {
+    setReplaceModal({
+      isOpen: false,
+      document: null,
+      vehicleName: ''
+    })
+  }
+
+  const handleReplaceSuccess = (updatedDocument) => {
+    // Refresh vehicles data to show updated document
+    fetchVehicles()
+    handleReplaceClose()
+  }
+
+  const handleHistoryClick = (document, vehicleName) => {
+    setHistoryModal({
+      isOpen: true,
+      document,
+      vehicleName
+    })
+  }
+
+  const handleHistoryClose = () => {
+    setHistoryModal({
+      isOpen: false,
+      document: null,
+      vehicleName: ''
+    })
+  }
+
+  const fetchVehicles = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/vehicles')
+      const data = await response.json()
+      
+      if (data.success) {
+        setVehicles(data.data)
+      } else {
+        setError('Error al cargar los vehículos')
+      }
+    } catch (err) {
+      setError('Error de conexión')
+      console.error('Error fetching vehicles:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const getStatusBadge = (status) => {
@@ -260,7 +328,10 @@ const Vehicles = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-2">
-                        <button className="flex items-center gap-1 text-primary-600 hover:text-primary-900">
+                        <button 
+                          onClick={() => handleUploadClick(vehicle.id, vehicle.name, vehicle.client_id)}
+                          className="flex items-center gap-1 text-primary-600 hover:text-primary-900"
+                        >
                           <Upload className="h-4 w-4" />
                           Cargar
                         </button>
@@ -299,11 +370,17 @@ const Vehicles = () => {
                                 <div className="flex items-center gap-4">
                                   {getDocumentStatus(document)}
                                   <div className="flex gap-2">
-                                    <button className="flex items-center gap-1 text-primary-600 hover:text-primary-900 text-sm">
+                                    <button 
+                                      onClick={() => handleReplaceClick(document, vehicle.name)}
+                                      className="flex items-center gap-1 text-primary-600 hover:text-primary-900 text-sm"
+                                    >
                                       <Upload className="h-4 w-4" />
                                       Cargar documento
                                     </button>
-                                    <button className="flex items-center gap-1 text-gray-600 hover:text-gray-900 text-sm">
+                                    <button 
+                                      onClick={() => handleHistoryClick(document, vehicle.name)}
+                                      className="flex items-center gap-1 text-gray-600 hover:text-gray-900 text-sm"
+                                    >
                                       <History className="h-4 w-4" />
                                       Ver historial
                                     </button>
@@ -322,6 +399,32 @@ const Vehicles = () => {
           </table>
         </div>
       </div>
+
+      {/* Modals */}
+      <UploadModal
+        isOpen={uploadModal.isOpen}
+        onClose={handleUploadClose}
+        onUpload={handleUploadSuccess}
+        entityId={uploadModal.vehicleId}
+        entityName={uploadModal.vehicleName}
+        entityType="vehicle"
+        clientId={uploadModal.clientId}
+      />
+
+      <ReplaceDocumentModal
+        isOpen={replaceModal.isOpen}
+        onClose={handleReplaceClose}
+        onReplace={handleReplaceSuccess}
+        document={replaceModal.document}
+        entityName={replaceModal.vehicleName}
+      />
+
+      <DocumentHistoryModal
+        isOpen={historyModal.isOpen}
+        onClose={handleHistoryClose}
+        document={historyModal.document}
+        entityName={historyModal.vehicleName}
+      />
     </div>
   )
 }

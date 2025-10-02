@@ -12,35 +12,20 @@ import {
   CheckCircle
 } from 'lucide-react'
 import UploadModal from '../components/UploadModal'
+import ReplaceDocumentModal from '../components/ReplaceDocumentModal'
+import DocumentHistoryModal from '../components/DocumentHistoryModal'
 
 const Personnel = () => {
   const [personnel, setPersonnel] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [expandedRows, setExpandedRows] = useState(new Set())
-  const [uploadModal, setUploadModal] = useState({ isOpen: false, personnelId: null, personnelName: '' })
+  const [uploadModal, setUploadModal] = useState({ isOpen: false, personnelId: null, personnelName: '', clientId: null })
+  const [replaceModal, setReplaceModal] = useState({ isOpen: false, document: null, personnelName: '' })
+  const [historyModal, setHistoryModal] = useState({ isOpen: false, document: null, personnelName: '' })
 
   // Fetch personnel from backend
   useEffect(() => {
-    const fetchPersonnel = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch('/api/personnel')
-        const data = await response.json()
-        
-        if (data.success) {
-          setPersonnel(data.data)
-        } else {
-          setError('Error al cargar el personal')
-        }
-      } catch (err) {
-        setError('Error de conexión')
-        console.error('Error fetching personnel:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchPersonnel()
   }, [])
 
@@ -61,11 +46,12 @@ const Personnel = () => {
     setExpandedRows(newExpanded)
   }
 
-  const handleUploadClick = (personnelId, personnelName) => {
+  const handleUploadClick = (personnelId, personnelName, clientId) => {
     setUploadModal({
       isOpen: true,
       personnelId,
-      personnelName
+      personnelName,
+      clientId
     })
   }
 
@@ -73,14 +59,72 @@ const Personnel = () => {
     setUploadModal({
       isOpen: false,
       personnelId: null,
+      personnelName: '',
+      clientId: null
+    })
+  }
+
+  const handleUploadSuccess = (uploadedDocuments) => {
+    // Refresh personnel data to show new documents
+    fetchPersonnel()
+    handleUploadClose()
+  }
+
+  const handleReplaceClick = (document, personnelName) => {
+    setReplaceModal({
+      isOpen: true,
+      document,
+      personnelName
+    })
+  }
+
+  const handleReplaceClose = () => {
+    setReplaceModal({
+      isOpen: false,
+      document: null,
       personnelName: ''
     })
   }
 
-  const handleUpload = (files) => {
-    // Here you would implement the actual upload logic
-    console.log('Uploading files for personnel:', uploadModal.personnelId, files)
-    // You can call an API endpoint here to upload the files
+  const handleReplaceSuccess = (updatedDocument) => {
+    // Refresh personnel data to show updated document
+    fetchPersonnel()
+    handleReplaceClose()
+  }
+
+  const handleHistoryClick = (document, personnelName) => {
+    setHistoryModal({
+      isOpen: true,
+      document,
+      personnelName
+    })
+  }
+
+  const handleHistoryClose = () => {
+    setHistoryModal({
+      isOpen: false,
+      document: null,
+      personnelName: ''
+    })
+  }
+
+  const fetchPersonnel = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/personnel')
+      const data = await response.json()
+      
+      if (data.success) {
+        setPersonnel(data.data)
+      } else {
+        setError('Error al cargar el personal')
+      }
+    } catch (err) {
+      setError('Error de conexión')
+      console.error('Error fetching personnel:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const getStatusBadge = (status) => {
@@ -283,7 +327,7 @@ const Personnel = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-2">
                         <button 
-                          onClick={() => handleUploadClick(person.id, person.name)}
+                          onClick={() => handleUploadClick(person.id, person.name, person.client_id)}
                           className="flex items-center gap-1 text-primary-600 hover:text-primary-900"
                         >
                           <Upload className="h-4 w-4" />
@@ -325,13 +369,16 @@ const Personnel = () => {
                                   {getDocumentStatus(document)}
                                   <div className="flex gap-2">
                                     <button 
-                                      onClick={() => handleUploadClick(person.id, person.name)}
+                                      onClick={() => handleReplaceClick(document, person.name)}
                                       className="flex items-center gap-1 text-primary-600 hover:text-primary-900 text-sm"
                                     >
                                       <Upload className="h-4 w-4" />
                                       Cargar documento
                                     </button>
-                                    <button className="flex items-center gap-1 text-gray-600 hover:text-gray-900 text-sm">
+                                    <button 
+                                      onClick={() => handleHistoryClick(document, person.name)}
+                                      className="flex items-center gap-1 text-gray-600 hover:text-gray-900 text-sm"
+                                    >
                                       <History className="h-4 w-4" />
                                       Ver historial
                                     </button>
@@ -351,13 +398,30 @@ const Personnel = () => {
         </div>
       </div>
 
-      {/* Upload Modal */}
+      {/* Modals */}
       <UploadModal
         isOpen={uploadModal.isOpen}
         onClose={handleUploadClose}
-        onUpload={handleUpload}
-        personnelId={uploadModal.personnelId}
-        personnelName={uploadModal.personnelName}
+        onUpload={handleUploadSuccess}
+        entityId={uploadModal.personnelId}
+        entityName={uploadModal.personnelName}
+        entityType="personnel"
+        clientId={uploadModal.clientId}
+      />
+
+      <ReplaceDocumentModal
+        isOpen={replaceModal.isOpen}
+        onClose={handleReplaceClose}
+        onReplace={handleReplaceSuccess}
+        document={replaceModal.document}
+        entityName={replaceModal.personnelName}
+      />
+
+      <DocumentHistoryModal
+        isOpen={historyModal.isOpen}
+        onClose={handleHistoryClose}
+        document={historyModal.document}
+        entityName={historyModal.personnelName}
       />
     </div>
   )
